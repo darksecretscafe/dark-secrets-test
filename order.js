@@ -11,13 +11,25 @@ const modalTotal = document.getElementById('modalTotal');
 const deliveryFields = document.getElementById('deliveryFields');
 let pinLocation = null;
 
-items.forEach(el => el.querySelector('.add-btn').addEventListener('click', () => {
-  const name = el.dataset.name, price = Number(el.dataset.price);
-  const current = cart.get(name) || {name, price, qty:0};
-  current.qty++;
-  cart.set(name,current);
-  updateUI();
-}));
+items.forEach(el => {
+  const addBtn = el.querySelector('.add-btn');
+  const controls = document.createElement('div');
+  controls.className = 'menu-qty';
+  controls.hidden = true;
+  controls.innerHTML = '<button type="button" class="menu-minus" aria-label="Remove one">−</button><b class="menu-count">0</b><button type="button" class="menu-plus" aria-label="Add one">+</button>';
+  addBtn.insertAdjacentElement('afterend', controls);
+
+  const addOne = () => {
+    const name = el.dataset.name, price = Number(el.dataset.price);
+    const current = cart.get(name) || {name, price, qty:0};
+    current.qty++;
+    cart.set(name,current);
+    updateUI();
+  };
+  addBtn.addEventListener('click', addOne);
+  controls.querySelector('.menu-plus').addEventListener('click', addOne);
+  controls.querySelector('.menu-minus').addEventListener('click', () => changeQty(el.dataset.name,-1));
+});
 
 function totals(){
   let count=0,total=0;
@@ -31,7 +43,11 @@ function updateUI(){
   items.forEach(el=>{
     const q=cart.get(el.dataset.name)?.qty||0;
     const btn=el.querySelector('.add-btn');
-    btn.textContent=q?`+ ADD (${q})`:'+ ADD'; btn.classList.toggle('active',q>0);
+    const controls=el.querySelector('.menu-qty');
+    btn.hidden=q>0;
+    btn.textContent='+ ADD';
+    controls.hidden=q===0;
+    controls.querySelector('.menu-count').textContent=q;
   });
   if(modal.classList.contains('open')) renderOrder();
 }

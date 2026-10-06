@@ -37,3 +37,9 @@
 .pin-location-box{background:#fffaf4;border:1px solid #c9b7a7;border-radius:12px;padding:12px}.pin-location-box>div{display:flex;justify-content:space-between;gap:10px;align-items:center}.pin-location-box strong{font-size:12px}.pin-location-box small{font-size:10px;color:#79695f}.location-btn{width:100%;margin-top:10px;border:1px solid #7b5d49;background:#f7f1e8;color:#38251b;border-radius:999px;padding:12px;font-size:10px;font-weight:800;letter-spacing:.6px;cursor:pointer}.location-btn:disabled{opacity:.6}.pin-location-box p{font-size:10px;color:#79695f;margin:8px 2px 0;line-height:1.4}.view-pin{display:inline-block;margin-top:7px;color:#38251b;font-size:10px;font-weight:800;letter-spacing:.5px}.confirmation-card .summary-section{display:block;padding:10px 0}.confirmation-card .summary-section>strong{display:block;text-align:left;margin-bottom:6px}.confirmation-card .summary-item{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border:0}.confirmation-card .summary-address{display:block;line-height:1.45}.confirmation-card .summary-address strong{display:block;text-align:left;margin-top:3px}.confirmation-card a{color:#38251b}
 
 .view-pin[hidden]{display:none!important}
+
+.menu-qty{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.menu-qty[hidden]{display:none!important}
+.menu-qty button{width:30px;height:30px;border:1px solid #7b5d49;background:transparent;color:#38251b;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.menu-qty .menu-count{min-width:16px;text-align:center;font-size:13px}
+@media(max-width:500px){.menu-qty{gap:6px}.menu-qty button{width:28px;height:28px;font-size:17px}}
