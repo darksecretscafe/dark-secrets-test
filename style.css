@@ -43,3 +43,5 @@
 .menu-qty button{width:30px;height:30px;border:1px solid #7b5d49;background:transparent;color:#38251b;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
 .menu-qty .menu-count{min-width:16px;text-align:center;font-size:13px}
 @media(max-width:500px){.menu-qty{gap:6px}.menu-qty button{width:28px;height:28px;font-size:17px}}
+
+.add-btn[hidden]{display:none!important}
