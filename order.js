@@ -112,15 +112,29 @@ async function copyText(text){
 const useLocationBtn=document.getElementById('useLocation');
 useLocationBtn.onclick=()=>{
   const status=document.getElementById('locationStatus'), link=document.getElementById('viewPin');
+  // Never show a stale map link while a new location request is starting or after it fails.
+  link.hidden=true; link.removeAttribute('href'); pinLocation=null;
   if(!navigator.geolocation){status.textContent='Location is not supported on this browser.';return;}
-  useLocationBtn.disabled=true; useLocationBtn.textContent='GETTING LOCATION…'; status.textContent='Please allow location access on your phone.';
+
+  const proceed=window.confirm('For an accurate delivery pin, please turn ON your phone Location/GPS first. Then tap OK and allow location access when your browser asks.');
+  if(!proceed){status.textContent='Turn on Location/GPS, then tap USE MY LOCATION again.';return;}
+
+  useLocationBtn.disabled=true; useLocationBtn.textContent='GETTING LOCATION…'; status.textContent='Waiting for your exact location… Please allow location access.';
   navigator.geolocation.getCurrentPosition(pos=>{
     pinLocation={lat:pos.coords.latitude.toFixed(6),lng:pos.coords.longitude.toFixed(6),accuracy:Math.round(pos.coords.accuracy)};
     status.textContent=`Pin captured ✓ Approx. accuracy: ${pinLocation.accuracy} m`;
     link.href=`https://www.google.com/maps?q=${pinLocation.lat},${pinLocation.lng}`; link.hidden=false;
     useLocationBtn.textContent='📍 UPDATE MY LOCATION'; useLocationBtn.disabled=false;
   },err=>{
-    status.textContent=err.code===1?'Location permission was denied. You can still enter your address manually.':'Could not get your location. Try again or enter your address manually.';
+    link.hidden=true; link.removeAttribute('href'); pinLocation=null;
+    if(err.code===1){
+      status.textContent='Location permission was denied. Allow Location for this site, then try again.';
+    }else if(err.code===2){
+      status.textContent='Your location could not be detected. Make sure Location/GPS is ON, then try again.';
+      window.alert('Location/GPS may be turned off or unavailable. Please turn on Location/GPS, then tap USE MY LOCATION again.');
+    }else{
+      status.textContent='Location request timed out. Make sure Location/GPS is ON and try again.';
+    }
     useLocationBtn.textContent='📍 USE MY LOCATION'; useLocationBtn.disabled=false;
   },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 };
