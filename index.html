@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f5efe6">
 <title>Dark Secrets Coffee | Digital Menu</title>
 <meta name="description" content="Dark Secrets Coffee digital menu">
-<link rel="stylesheet" href="style.css?v=phase1-qty2">
+<link rel="stylesheet" href="style.css?v=phase1-final-candidate1">
 </head>
 <body>
 <main>
@@ -20,27 +20,26 @@
 <section class="menu">
   <div class="group">
     <h2>☕ Coffee</h2>
-    <div class="menu-item" data-name="Coffee Amerikano" data-price="100"><span>Coffee Amerikano</span><b>₱100</b><button class="add-btn" type="button">+ ADD</button></div>
-    <div class="menu-item" data-name="Cafe Latte" data-price="115"><span>Cafe Latte</span><b>₱115</b><button class="add-btn" type="button">+ ADD</button></div>
-    <div class="menu-item" data-name="Spanish Latte" data-price="125"><span>Spanish Latte</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
-    <div class="menu-item" data-name="White Chocolate Mocha" data-price="125"><span>White Chocolate Mocha</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
-    <div class="menu-item" data-name="Caramel Machiatto" data-price="125"><span>Caramel Machiatto</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Coffee Amerikano" data-price="100" data-drink="true"><span>Coffee Amerikano</span><b>₱100</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Cafe Latte" data-price="115" data-drink="true"><span>Cafe Latte</span><b>₱115</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Spanish Latte" data-price="125" data-drink="true"><span>Spanish Latte</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="White Chocolate Mocha" data-price="125" data-drink="true"><span>White Chocolate Mocha</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Caramel Machiatto" data-price="125" data-drink="true"><span>Caramel Machiatto</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
     <small>All of our coffee drinks are standard double-shot.</small>
   </div>
   <div class="group">
     <h2>◒ Non-Coffee</h2>
-    <div class="menu-item" data-name="Matcha Latte" data-price="130"><span>Matcha Latte</span><b>₱130</b><button class="add-btn" type="button">+ ADD</button></div>
-    <div class="menu-item" data-name="Berries and Cream" data-price="100"><span>Berries and Cream</span><b>₱100</b><button class="add-btn" type="button">+ ADD</button></div>
-    <div class="menu-item" data-name="Hot Chocolate" data-price="80"><span>Hot Chocolate</span><b>₱80</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Matcha Latte" data-price="130" data-drink="true"><span>Matcha Latte</span><b>₱130</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Berries and Cream" data-price="100" data-drink="true"><span>Berries and Cream</span><b>₱100</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Hot Chocolate" data-price="80" data-drink="true"><span>Hot Chocolate</span><b>₱80</b><button class="add-btn" type="button">+ ADD</button></div>
   </div>
   <div class="addon menu-item" data-name="Sub Oat Milk" data-price="30"><span><small>ADD-ON</small>Sub Oat Milk</span><b>+₱30</b><button class="add-btn" type="button">+ ADD</button></div>
 </section>
 
 <section class="take-banner"><img src="assets/takeaway-banner.jpg" alt="Dark Secrets Take It With You bottled takeaway drinks"></section>
-<section class="cta"><span>READY TO ORDER?</span><h2>Build your order.</h2><button id="openOrder" class="order-main-btn" type="button">🛒 VIEW ORDER <em id="ctaCount">0</em></button><p>Select drinks above, then complete the checkout details.</p></section>
+<section class="cta"><span>READY TO ORDER?</span><h2>Build your order.</h2><button id="openOrder" class="order-main-btn" type="button">🛒 VIEW ORDER <em id="ctaCount">0</em></button><p id="ctaSummary">Select drinks above, then complete the checkout details.</p></section>
 </main>
 
-<button id="cartBar" class="cart-bar" type="button" hidden><span>🛒 View Order</span><strong><span id="cartCount">0</span> item(s) • ₱<span id="cartTotal">0</span></strong></button>
 
 <div id="orderModal" class="modal" aria-hidden="true">
   <div class="modal-backdrop" data-close></div>
@@ -53,8 +52,8 @@
     <div id="checkoutForm" class="checkout-step">
       <div class="checkout-heading"><h3>Checkout</h3><span>PHASE 1 TEST</span></div>
       <div class="customer-fields">
-        <label id="nameField">Name <span class="required-mark">*</span><input id="customerName" type="text" autocomplete="name" placeholder="Your name"><span class="field-error">Please enter your name.</span></label>
-        <label id="phoneField">Mobile Number <span class="required-mark">*</span><input id="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="09XX XXX XXXX"><span class="field-error">Please enter your mobile number.</span></label>
+        <label id="nameField">Name <span class="required-mark">*</span><input id="customerName" type="text" autocomplete="name" maxlength="30" placeholder="Your name"><span class="field-error">Please enter your name.</span></label>
+        <label id="phoneField">Mobile Number <span class="required-mark">*</span><input id="customerPhone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="11" pattern="[0-9]{11}" placeholder="09XXXXXXXXX"><span class="field-error">Please enter your mobile number.</span></label>
         <fieldset class="order-method" id="methodField">
           <legend>Order Method <span class="required-mark">*</span></legend>
           <label><input type="radio" name="orderMethod" value="Pick Up"> <span>Pick Up</span></label>
@@ -62,9 +61,9 @@
           <span class="field-error">Please choose Pick Up or Delivery.</span>
         </fieldset>
         <div id="deliveryFields" class="delivery-fields">
-          <label id="addressField">Delivery Address <span class="required-mark">*</span><textarea id="deliveryAddress" rows="3" placeholder="House/Unit, Street, Barangay, City"></textarea><span class="field-error">Please enter the delivery address.</span></label>
+          <label id="addressField">Delivery Address <span class="required-mark">*</span><textarea id="deliveryAddress" rows="3" maxlength="120" placeholder="House/Unit, Street, Barangay, City"></textarea><span class="field-error">Please enter the delivery address.</span></label>
           <div class="pin-location-box"><div><strong>Exact Pin Location</strong><small>Recommended for delivery</small></div><button id="useLocation" class="location-btn" type="button">📍 USE MY LOCATION</button><p id="locationStatus">No pin location added yet.</p><a id="viewPin" class="view-pin" href="#" target="_blank" rel="noopener" hidden>VIEW PIN ON MAP ↗</a></div>
-          <label>Landmark <small>(optional)</small><input id="deliveryLandmark" type="text" placeholder="e.g. near church, gate color"></label>
+          <label>Landmark <small>(optional)</small><input id="deliveryLandmark" type="text" maxlength="50" placeholder="e.g. near church, gate color"></label>
         </div>
         <fieldset class="payment-method" id="paymentField">
           <legend>Payment Method <span class="required-mark">*</span></legend>
@@ -73,7 +72,7 @@
           <label><input type="radio" name="paymentMethod" value="Maya"> Maya</label>
           <span class="field-error">Please choose a payment method.</span>
         </fieldset>
-        <label>Notes <small>(optional)</small><textarea id="orderNotes" rows="3" placeholder="e.g. less ice, no straw"></textarea></label>
+        <label>Notes <small>(optional)</small><textarea id="orderNotes" rows="3" maxlength="150" placeholder="e.g. less ice, no straw"></textarea><span id="notesCount" class="char-count">0 / 150</span></label>
       </div>
       <div class="checkout-actions">
         <button id="placeOrder" class="place-order-btn" type="button">PLACE TEST ORDER →</button>
@@ -91,6 +90,6 @@
     </div>
   </section>
 </div>
-<script src="order.js?v=phase1-qty2"></script>
+<script src="order.js?v=phase1-final-candidate1"></script>
 </body>
 </html>

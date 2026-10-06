@@ -45,3 +45,13 @@
 @media(max-width:500px){.menu-qty{gap:6px}.menu-qty button{width:28px;height:28px;font-size:17px}}
 
 .add-btn[hidden]{display:none!important}
+
+/* Phase 1 final candidate cleanup */
+.cta #ctaSummary{min-height:16px}
+.menu-qty button:disabled,.qty button:disabled{opacity:.35;cursor:not-allowed}
+.packaging-choice{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.packaging-choice button{border:1px solid #b8a493;background:#fffaf4;color:#4a382d;border-radius:999px;padding:7px 9px;font-size:9px;font-weight:700;cursor:pointer}
+.packaging-choice button.selected{background:#2a1c15;color:#fff;border-color:#2a1c15}
+.char-count{display:block;text-align:right;margin-top:5px;font-size:9px;color:#79695f}
+.summary-addon{font-weight:400;color:#79695f;line-height:1.4}
+@media(max-width:500px){.packaging-choice{max-width:230px}.packaging-choice button{font-size:8.5px;padding:6px 8px}}
