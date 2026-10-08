@@ -64,7 +64,7 @@ function renderOrder(){
     if(!i.qty)return;
     const row=document.createElement('div'); row.className='order-line';
     if(i.isDrink){
-      row.innerHTML=`<div class="split-packaging"><div class="order-line-name">${i.name}</div><div class="order-line-price">${i.qty} item${i.qty===1?'':'s'} • ${peso(itemTotal(i))}</div><div class="packaging-rows"><div class="packaging-row"><div><strong>Regular Cup</strong><small>${peso(i.price)} each</small></div><div class="qty"><button type="button" data-pack="regular" data-act="minus" aria-label="Remove regular cup" ${i.regularQty===0?'disabled':''}>−</button><b>${i.regularQty}</b><button type="button" data-pack="regular" data-act="plus" aria-label="Add regular cup" ${i.qty>=MAX_QTY?'disabled':''}>+</button></div></div><div class="packaging-row"><div><strong>Take Away Bottle</strong><small>${peso(i.price+BOTTLE_FEE)} each (+₱${BOTTLE_FEE})</small></div><div class="qty"><button type="button" data-pack="bottle" data-act="minus" aria-label="Remove bottle" ${i.bottleQty===0?'disabled':''}>−</button><b>${i.bottleQty}</b><button type="button" data-pack="bottle" data-act="plus" aria-label="Add bottle" ${i.qty>=MAX_QTY?'disabled':''}>+</button></div></div></div></div>`;
+      row.innerHTML=`<div class="split-packaging"><div class="order-line-name">${i.name}</div><div class="order-line-price">${i.qty} item${i.qty===1?'':'s'} • ${peso(itemTotal(i))}</div><div class="packaging-rows"><div class="packaging-row"><div><strong>Regular Cup</strong><small>${peso(i.price)} each</small></div><div class="qty"><button type="button" data-pack="regular" data-act="minus" aria-label="Remove regular cup" ${i.regularQty===0?'disabled':''}>−</button><b>${i.regularQty}</b><button type="button" data-pack="regular" data-act="plus" aria-label="Add regular cup" ${i.qty>=MAX_QTY?'disabled':''}>+</button></div></div><div class="packaging-row"><div><strong>Take Away Bottle</strong><small>${peso(i.price+BOTTLE_FEE)} each (+₱${BOTTLE_FEE})</small></div><div class="qty"><button type="button" data-pack="bottle" data-act="minus" aria-label="Remove bottle" ${i.bottleQty===0?'disabled':''}>−</button><b>${i.bottleQty}</b><button type="button" data-pack="bottle" data-act="plus" aria-label="Add bottle" ${i.qty>=MAX_QTY && !(i.regularQty===1 && i.bottleQty===0)?'disabled':''}>+</button></div></div></div></div>`;
       row.querySelectorAll('[data-act]').forEach(btn=>btn.onclick=()=>changePackagingQty(i.name,btn.dataset.pack,btn.dataset.act==='plus'?1:-1));
     }else{
       row.innerHTML=`<div><div class="order-line-name">${i.name}</div><div class="order-line-price">${peso(i.price)} each • ${peso(itemTotal(i))}</div></div><div class="qty"><button type="button" data-act="minus" aria-label="Remove one">−</button><b>${i.qty}</b><button type="button" data-act="plus" aria-label="Add one" ${i.qty>=MAX_QTY?'disabled':''}>+</button></div>`;
@@ -81,8 +81,14 @@ function renderOrder(){
 function changePackagingQty(name,pack,delta){
   const i=cart.get(name); if(!i||!i.isDrink)return;
   const key=pack==='bottle'?'bottleQty':'regularQty';
-  if(delta>0 && i.qty>=MAX_QTY || delta<0 && i[key]===0)return;
-  i[key]+=delta; i.qty=i.regularQty+i.bottleQty;
+  // First bottle selection converts the sole default regular cup instead of adding a drink.
+  if(pack==='bottle' && delta>0 && i.regularQty===1 && i.bottleQty===0){
+    i.regularQty=0; i.bottleQty=1;
+  }else{
+    if((delta>0 && i.qty>=MAX_QTY) || (delta<0 && i[key]===0))return;
+    i[key]+=delta;
+  }
+  i.qty=i.regularQty+i.bottleQty;
   if(!i.qty)cart.delete(name); else cart.set(name,i);
   updateUI();
 }
