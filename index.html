@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f5efe6">
 <title>Dark Secrets Coffee | Digital Menu</title>
 <meta name="description" content="Dark Secrets Coffee digital menu">
-<link rel="stylesheet" href="style.css?v=phase1-final-candidate1">
+<link rel="stylesheet" href="style.css?v=phase1-delivery-only2">
 </head>
 <body>
 <main>
@@ -54,15 +54,9 @@
       <div class="customer-fields">
         <label id="nameField">Name <span class="required-mark">*</span><input id="customerName" type="text" autocomplete="name" maxlength="30" placeholder="Your name"><span class="field-error">Please enter your name.</span></label>
         <label id="phoneField">Mobile Number <span class="required-mark">*</span><input id="customerPhone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="11" pattern="[0-9]{11}" placeholder="09XXXXXXXXX"><span class="field-error">Please enter your mobile number.</span></label>
-        <fieldset class="order-method" id="methodField">
-          <legend>Order Method <span class="required-mark">*</span></legend>
-          <label><input type="radio" name="orderMethod" value="Pick Up"> <span>Pick Up</span></label>
-          <label><input type="radio" name="orderMethod" value="Delivery"> <span>Delivery</span></label>
-          <span class="field-error">Please choose Pick Up or Delivery.</span>
-        </fieldset>
-        <div id="deliveryFields" class="delivery-fields">
+        <div id="deliveryFields" class="delivery-fields show">
           <label id="addressField">Delivery Address <span class="required-mark">*</span><textarea id="deliveryAddress" rows="3" maxlength="120" placeholder="House/Unit, Street, Barangay, City"></textarea><span class="field-error">Please enter the delivery address.</span></label>
-          <div class="pin-location-box"><div><strong>Exact Pin Location</strong><small>Recommended for delivery</small></div><button id="useLocation" class="location-btn" type="button">📍 USE MY LOCATION</button><p id="locationStatus">No pin location added yet.</p><a id="viewPin" class="view-pin" href="#" target="_blank" rel="noopener" hidden>VIEW PIN ON MAP ↗</a></div>
+          <div class="pin-location-box"><div><strong>Exact Pin Location <span class="required-mark">*</span></strong><small>Required for delivery</small></div><button id="useLocation" class="location-btn" type="button">📍 USE MY LOCATION</button><p id="locationStatus">No pin location added yet.</p><p id="pinError" class="pin-error" role="alert" hidden>Please add your GPS pin before placing an order.</p><a id="viewPin" class="view-pin" href="#" target="_blank" rel="noopener" hidden>VIEW PIN ON MAP ↗</a></div>
           <label>Landmark <small>(optional)</small><input id="deliveryLandmark" type="text" maxlength="50" placeholder="e.g. near church, gate color"></label>
         </div>
         <fieldset class="payment-method" id="paymentField">
@@ -75,10 +69,10 @@
         <label>Notes <small>(optional)</small><textarea id="orderNotes" rows="3" maxlength="150" placeholder="e.g. less ice, no straw"></textarea><span id="notesCount" class="char-count">0 / 150</span></label>
       </div>
       <div class="checkout-actions">
-        <button id="placeOrder" class="place-order-btn" type="button">PLACE TEST ORDER →</button>
+        <button id="placeOrder" class="place-order-btn" type="button" disabled aria-disabled="true">🚧 ONLINE ORDERING — UNDER CONSTRUCTION</button>
         <button id="messengerOrder" class="secondary-order-btn" type="button">COPY ORDER & OPEN MESSENGER</button>
       </div>
-      <p class="checkout-note">Phase 1 test only — no payment will be collected and this order is not yet saved to a database.</p>
+      <p class="checkout-note">Online ordering is under construction. Orders are not submitted through this website yet. You can use Messenger to send an order manually.</p>
     </div>
     <div id="orderConfirmation" class="confirmation">
       <div class="confirmation-icon">✓</div>
@@ -90,6 +84,6 @@
     </div>
   </section>
 </div>
-<script src="order.js?v=phase1-final-candidate1"></script>
+<script src="order.js?v=phase1-delivery-only2"></script>
 </body>
 </html>
