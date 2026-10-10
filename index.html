@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f5efe6">
 <title>Dark Secrets Coffee | Digital Menu</title>
 <meta name="description" content="Dark Secrets Coffee digital menu">
-<link rel="stylesheet" href="style.css?v=phase1-delivery-only2">
+<link rel="stylesheet" href="style.css?v=customizer2">
 </head>
 <body>
 <main>
@@ -40,6 +40,22 @@
 <section class="cta"><span>READY TO ORDER?</span><h2>Build your order.</h2><button id="openOrder" class="order-main-btn" type="button">🛒 VIEW ORDER <em id="ctaCount">0</em></button><p id="ctaSummary">Select drinks above, then complete the checkout details.</p></section>
 </main>
 
+
+<div id="customizeModal" class="modal" aria-hidden="true">
+ <div class="modal-backdrop" data-custom-close></div>
+ <section class="order-sheet customize-sheet" role="dialog" aria-modal="true" aria-labelledby="customName">
+  <button type="button" class="close-btn" data-custom-close aria-label="Close">×</button>
+  <span class="eyebrow">CUSTOMIZE YOUR DRINK</span>
+  <h2 id="customName">Drink</h2>
+  <label class="custom-label" for="customPack">Packaging</label>
+  <select id="customPack" class="custom-select"><option value="Regular Cup">Regular Cup</option><option value="Take Away Bottle">Take Away Bottle (+₱15)</option></select>
+  <label id="customOatRow" class="custom-oat"><input type="checkbox" id="customOat"> Sub Oat Milk (+₱30)</label>
+  <div class="custom-quantity"><strong>Quantity</strong><div class="qty"><button type="button" id="customMinus">−</button><b id="customQty">1</b><button type="button" id="customPlus">+</button></div></div>
+  <div class="order-total"><span>Total</span><strong id="customPrice">₱0</strong></div>
+  <p id="customError" class="custom-error" role="alert"></p>
+  <button id="customAdd" class="order-main-btn custom-add" type="button">ADD TO CART</button>
+ </section>
+</div>
 
 <div id="orderModal" class="modal" aria-hidden="true">
   <div class="modal-backdrop" data-close></div>
@@ -89,6 +105,6 @@
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="supabase-config.js"></script>
 <script src="checkout-config.js"></script>
-<script src="order.js?v=phase2-final1"></script>
+<script src="order.js?v=customizer2"></script>
 </body>
 </html>
