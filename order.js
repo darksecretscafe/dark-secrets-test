@@ -93,6 +93,7 @@ function renderOrder(){
 function openModal(){
   document.getElementById('checkoutForm').style.display='block';
   document.getElementById('orderConfirmation').classList.remove('show');
+  modal.classList.remove('confirmation-active');
   renderOrder();modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
 }
 function closeModal(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow=''}
@@ -266,6 +267,7 @@ async function showSavedConfirmation(orderNumber){
   document.getElementById('newTestOrder').textContent='CREATE ANOTHER TEST ORDER';
   document.getElementById('checkoutForm').style.display='none';
   document.getElementById('orderConfirmation').classList.add('show');
+  modal.classList.add('confirmation-active');
   document.querySelector('.order-sheet').scrollTo({top:0,behavior:'smooth'});
 };
 
@@ -274,6 +276,7 @@ document.getElementById('newTestOrder').onclick=()=>{
   cart.clear(); updateUI();
   document.getElementById('checkoutForm').style.display='block';
   document.getElementById('orderConfirmation').classList.remove('show');
+  modal.classList.remove('confirmation-active');
   document.querySelector('.order-sheet').scrollTo({top:0,behavior:'smooth'});
 };
 

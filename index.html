@@ -7,6 +7,16 @@
 <title>Dark Secrets Coffee | Digital Menu</title>
 <meta name="description" content="Dark Secrets Coffee digital menu">
 <link rel="stylesheet" href="style.css?v=customizer2">
+<style>
+/* TEST: show only the receipt when checkout has succeeded. */
+#orderModal.confirmation-active > .order-sheet > .eyebrow,
+#orderModal.confirmation-active > .order-sheet > #orderTitle,
+#orderModal.confirmation-active > .order-sheet > #orderLines,
+#orderModal.confirmation-active > .order-sheet > .order-total {
+  display: none;
+}
+</style>
+
 </head>
 <body>
 <main>
@@ -105,6 +115,6 @@
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="supabase-config.js"></script>
 <script src="checkout-config.js"></script>
-<script src="order.js?v=customizer2"></script>
+<script src="order.js?v=confirmation-ui-fix1"></script>
 </body>
 </html>
