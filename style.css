@@ -70,3 +70,5 @@
 .packaging-row strong{display:block;font-size:13px}
 .packaging-row small{display:block;font-size:12px;color:#79675b;margin-top:3px}
 .packaging-row .qty{flex-shrink:0}
+
+.oat-note{font-size:13px;color:#655548;margin:12px 0 20px;line-height:1.5}

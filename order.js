@@ -1,6 +1,8 @@
 const cart = new Map();
 const MAX_QTY = 15;
 const BOTTLE_FEE = 15;
+const OAT_FEE = 30;
+const OAT_ELIGIBLE = new Set(['Cafe Latte','Spanish Latte','White Chocolate Mocha','Caramel Macchiato','Matcha Latte','Hot Chocolate']);
 const peso = n => `₱${n}`;
 const items = [...document.querySelectorAll('.menu-item')];
 const ctaCount = document.getElementById('ctaCount');
@@ -21,7 +23,7 @@ items.forEach(el => {
 
   const addOne = () => {
     const name = el.dataset.name, price = Number(el.dataset.price);
-    const current = cart.get(name) || {name, price, qty:0, isDrink:el.dataset.drink==='true', regularQty:0, bottleQty:0};
+    const current = cart.get(name) || {name, price, qty:0, isDrink:el.dataset.drink==='true', regularQty:0, bottleQty:0, oatRegularQty:0, oatBottleQty:0};
     if(current.qty >= MAX_QTY) return;
     current.qty++;
     if(current.isDrink) current.regularQty++;
@@ -33,7 +35,7 @@ items.forEach(el => {
   controls.querySelector('.menu-minus').addEventListener('click', () => changeQty(el.dataset.name,-1));
 });
 
-function itemTotal(i){return i.isDrink ? i.price*i.regularQty+(i.price+BOTTLE_FEE)*i.bottleQty : i.price*i.qty;}
+function itemTotal(i){return i.isDrink ? i.price*i.regularQty+(i.price+BOTTLE_FEE)*i.bottleQty+OAT_FEE*((i.oatRegularQty||0)+(i.oatBottleQty||0)) : i.price*i.qty;}
 function totals(){
   let count=0,total=0;
   cart.forEach(i=>{count+=i.qty;total+=itemTotal(i)});
@@ -64,7 +66,14 @@ function renderOrder(){
     if(!i.qty)return;
     const row=document.createElement('div'); row.className='order-line';
     if(i.isDrink){
-      row.innerHTML=`<div class="split-packaging"><div class="order-line-name">${i.name}</div><div class="order-line-price">${i.qty} item${i.qty===1?'':'s'} • ${peso(itemTotal(i))}</div><div class="packaging-rows"><div class="packaging-row"><div><strong>Regular Cup</strong><small>${peso(i.price)} each</small></div><div class="qty"><button type="button" data-pack="regular" data-act="minus" aria-label="Remove regular cup" ${i.regularQty===0?'disabled':''}>−</button><b>${i.regularQty}</b><button type="button" data-pack="regular" data-act="plus" aria-label="Add regular cup" ${i.qty>=MAX_QTY?'disabled':''}>+</button></div></div><div class="packaging-row"><div><strong>Take Away Bottle</strong><small>${peso(i.price+BOTTLE_FEE)} each (+₱${BOTTLE_FEE})</small></div><div class="qty"><button type="button" data-pack="bottle" data-act="minus" aria-label="Remove bottle" ${i.bottleQty===0?'disabled':''}>−</button><b>${i.bottleQty}</b><button type="button" data-pack="bottle" data-act="plus" aria-label="Add bottle" ${i.qty>=MAX_QTY && !(i.regularQty===1 && i.bottleQty===0)?'disabled':''}>+</button></div></div></div></div>`;
+      const oatAllowed=OAT_ELIGIBLE.has(i.name);
+      const choices=[
+        {key:'regular',label:'Regular Cup',qty:i.regularQty,unit:i.price},
+        {key:'bottle',label:'Take Away Bottle',qty:i.bottleQty,unit:i.price+BOTTLE_FEE},
+        ...(oatAllowed?[{key:'oatRegular',label:'Regular Cup · Oat Milk',qty:i.oatRegularQty||0,unit:i.price+OAT_FEE},
+          {key:'oatBottle',label:'Take Away Bottle · Oat Milk',qty:i.oatBottleQty||0,unit:i.price+BOTTLE_FEE+OAT_FEE}]:[])
+      ];
+      row.innerHTML=`<div class="split-packaging"><div class="order-line-name">${i.name}</div><div class="order-line-price">${i.qty} item${i.qty===1?'':'s'} • ${peso(itemTotal(i))}</div><div class="packaging-rows">${choices.map(c=>`<div class="packaging-row"><div><strong>${c.label}</strong><small>${peso(c.unit)} each${c.key.startsWith('oat')?' (Oat Milk +₱30)':''}</small></div><div class="qty"><button type="button" data-pack="${c.key}" data-act="minus" aria-label="Remove ${c.label}" ${!c.qty?'disabled':''}>−</button><b>${c.qty}</b><button type="button" data-pack="${c.key}" data-act="plus" aria-label="Add ${c.label}" ${i.qty>=MAX_QTY?'disabled':''}>+</button></div></div>`).join('')}</div></div>`;
       row.querySelectorAll('[data-act]').forEach(btn=>btn.onclick=()=>changePackagingQty(i.name,btn.dataset.pack,btn.dataset.act==='plus'?1:-1));
     }else{
       row.innerHTML=`<div><div class="order-line-name">${i.name}</div><div class="order-line-price">${peso(i.price)} each • ${peso(itemTotal(i))}</div></div><div class="qty"><button type="button" data-act="minus" aria-label="Remove one">−</button><b>${i.qty}</b><button type="button" data-act="plus" aria-label="Add one" ${i.qty>=MAX_QTY?'disabled':''}>+</button></div>`;
@@ -80,15 +89,18 @@ function renderOrder(){
 }
 function changePackagingQty(name,pack,delta){
   const i=cart.get(name); if(!i||!i.isDrink)return;
-  const key=pack==='bottle'?'bottleQty':'regularQty';
-  // First bottle selection converts the sole default regular cup instead of adding a drink.
-  if(pack==='bottle' && delta>0 && i.regularQty===1 && i.bottleQty===0){
-    i.regularQty=0; i.bottleQty=1;
+  const keys={regular:'regularQty',bottle:'bottleQty',oatRegular:'oatRegularQty',oatBottle:'oatBottleQty'};
+  const key=keys[pack]; if(!key)return;
+  if(pack.startsWith('oat')&&!OAT_ELIGIBLE.has(name))return;
+  i.oatRegularQty ||= 0; i.oatBottleQty ||= 0;
+  // With only one default cup, selecting another option converts it rather than adding another drink.
+  if(pack!=='regular'&&delta>0&&i.qty===1&&i.regularQty===1){
+    i.regularQty=0;i[key]=1;
   }else{
-    if((delta>0 && i.qty>=MAX_QTY) || (delta<0 && i[key]===0))return;
+    if((delta>0&&i.qty>=MAX_QTY)||(delta<0&&!i[key]))return;
     i[key]+=delta;
   }
-  i.qty=i.regularQty+i.bottleQty;
+  i.qty=i.regularQty+i.bottleQty+i.oatRegularQty+i.oatBottleQty;
   if(!i.qty)cart.delete(name); else cart.set(name,i);
   updateUI();
 }
@@ -143,7 +155,13 @@ function validateCheckout(){
 function orderText(){
   const d=checkoutData(); const {total}=totals();
   const out=['Hi Dark Secrets! I’d like to order:',''];
-  cart.forEach(i=>{if(i.isDrink){if(i.regularQty)out.push(`• ${i.regularQty}× ${i.name} (Regular Cup) — ${peso(i.regularQty*i.price)}`);if(i.bottleQty)out.push(`• ${i.bottleQty}× ${i.name} (Take Away Bottle +₱${BOTTLE_FEE}) — ${peso(i.bottleQty*(i.price+BOTTLE_FEE))}`);}else out.push(`• ${i.qty}× ${i.name} — ${peso(itemTotal(i))}`);});
+  cart.forEach(i=>{
+    if(i.isDrink){
+      for(const [key,label,extra] of [['regularQty','Regular Cup',0],['bottleQty','Take Away Bottle',BOTTLE_FEE],['oatRegularQty','Regular Cup · Oat Milk',OAT_FEE],['oatBottleQty','Take Away Bottle · Oat Milk',BOTTLE_FEE+OAT_FEE]]){
+        if(i[key])out.push(`• ${i[key]}× ${i.name} (${label}) — ${peso(i[key]*(i.price+extra))}`);
+      }
+    }else out.push(`• ${i.qty}× ${i.name} — ${peso(itemTotal(i))}`);
+  });
   out.push('',`Total: ${peso(total)}`,`Name: ${d.name || '-'}`,`Mobile: ${d.phone || '-'}`,`Order Method: ${d.method || '-'}`,`Payment: ${d.payment || '-'}`);
   if(d.method==='Delivery') {out.push(`Address: ${d.address || '-'}`); if(d.landmark) out.push(`Landmark: ${d.landmark}`); if(d.pin) out.push(`Pin: https://www.google.com/maps?q=${d.pin.lat},${d.pin.lng}`);}
   if(d.notes) out.push(`Notes: ${d.notes}`);
@@ -185,9 +203,10 @@ function orderItemsForBackend(){
  const result=[];
  cart.forEach(i=>{
   if(i.isDrink){
-   if(i.regularQty)result.push({name:i.name,packaging:'Regular Cup',quantity:i.regularQty});
-   if(i.bottleQty)result.push({name:i.name,packaging:'Take Away Bottle',quantity:i.bottleQty});
-  }else if(i.qty)result.push({name:i.name,packaging:'Add-on',quantity:i.qty});
+   for(const [key,packaging,oatMilk] of [['regularQty','Regular Cup',false],['bottleQty','Take Away Bottle',false],['oatRegularQty','Regular Cup',true],['oatBottleQty','Take Away Bottle',true]]){
+    if(i[key])result.push({name:i.name,packaging,quantity:i[key],oatMilk});
+   }
+  }
  });
  return result;
 }
@@ -235,9 +254,13 @@ async function showSavedConfirmation(orderNumber){
   const d=checkoutData(), {total}=totals();
   const card=document.getElementById('confirmationCard');
   const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let itemHtml=''; cart.forEach(i=>{if(i.isDrink){if(i.regularQty)itemHtml+=`<div class="summary-item"><span>${i.regularQty}× ${esc(i.name)}<small class="summary-addon"><br>↳ Regular Cup</small></span><strong>${peso(i.regularQty*i.price)}</strong></div>`;if(i.bottleQty)itemHtml+=`<div class="summary-item"><span>${i.bottleQty}× ${esc(i.name)}<small class="summary-addon"><br>↳ Take Away Bottle +₱${BOTTLE_FEE} each</small></span><strong>${peso(i.bottleQty*(i.price+BOTTLE_FEE))}</strong></div>`;}else itemHtml+=`<div class="summary-item"><span>${i.qty}× ${esc(i.name)}</span><strong>${peso(itemTotal(i))}</strong></div>`;});
-  let deliveryHtml='';
-  if(d.method==='Delivery') deliveryHtml=`<div class="summary-section summary-address"><strong>Delivery Details</strong><span>${esc(d.address)}</span>${d.landmark?`<span><br>Landmark: ${esc(d.landmark)}</span>`:''}${d.pin?`<br><a href="https://www.google.com/maps?q=${d.pin.lat},${d.pin.lng}" target="_blank" rel="noopener">📍 View exact pin location ↗</a>`:'<br><span>No pin location added</span>'}</div>`;
+  let itemHtml=''; cart.forEach(i=>{
+    if(i.isDrink){
+      for(const [key,label,extra] of [['regularQty','Regular Cup',0],['bottleQty','Take Away Bottle',BOTTLE_FEE],['oatRegularQty','Regular Cup · Oat Milk',OAT_FEE],['oatBottleQty','Take Away Bottle · Oat Milk',BOTTLE_FEE+OAT_FEE]]){
+        if(i[key])itemHtml+=`<div class="summary-item"><span>${i[key]}× ${esc(i.name)}<small class="summary-addon"><br>↳ ${label}</small></span><strong>${peso(i[key]*(i.price+extra))}</strong></div>`;
+      }
+    }
+  });
   card.innerHTML=`<div><span>Order Number</span><strong>${esc(orderNumber)}</strong></div><div><span>Customer</span><strong>${esc(d.name)}</strong></div><div><span>Mobile</span><strong>${esc(d.phone)}</strong></div><div class="summary-section"><strong>Items</strong>${itemHtml}</div><div><span>Total</span><strong>${peso(total)}</strong></div><div><span>Order Method</span><strong>${d.method}</strong></div><div><span>Payment</span><strong>${d.payment}</strong></div>${deliveryHtml}${d.notes?`<div class="summary-section summary-address"><strong>Notes</strong><span>${esc(d.notes)}</span></div>`:''}`;
   document.querySelector('#orderConfirmation .phase-badge').textContent='ORDER SAVED';
   document.querySelector('#orderConfirmation h3').textContent='Your order has been received.';
