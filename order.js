@@ -173,6 +173,11 @@ useLocationBtn.onclick=()=>{
 
 let submitBusy = false;
 let pendingOrder = null;
+// TEST ONLY: simulate a lost confirmation after a successful server response.
+// Enabled by adding ?simulateLostConfirmation=1 to the TEST page URL.
+let simulateLostConfirmationOnce =
+  window.location.pathname.startsWith('/dark-secrets-test/') &&
+  new URLSearchParams(window.location.search).get('simulateLostConfirmation') === '1';
 
 function getOrderAttempt(payload) {
   const fingerprint = JSON.stringify(payload);
@@ -237,6 +242,10 @@ const idempotencyKey = getOrderAttempt(orderPayload);
   });
   const result=await response.json();
   if(!response.ok || !result.order_number)throw new Error(result.error||'Could not save order.');
+  if (simulateLostConfirmationOnce) {
+    simulateLostConfirmationOnce = false;
+    throw new Error('TEST ONLY: Simulated lost confirmation after server saved the order. Complete verification again and retry without changing the order.');
+  }
   status.textContent='';
 pendingOrder = null;
 showSavedConfirmation(result.order_number);
