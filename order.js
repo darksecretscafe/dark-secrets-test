@@ -171,7 +171,21 @@ useLocationBtn.onclick=()=>{
   },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 };
 
-let submitBusy=false;
+let submitBusy = false;
+let pendingOrder = null;
+
+function getOrderAttempt(payload) {
+  const fingerprint = JSON.stringify(payload);
+
+  if (!pendingOrder || pendingOrder.fingerprint !== fingerprint) {
+    pendingOrder = {
+      fingerprint,
+      idempotencyKey: crypto.randomUUID()
+    };
+  }
+
+  return pendingOrder.idempotencyKey;
+}
 function orderItemsForBackend(){
  return Array.from(cart.values()).map(i=>({name:i.name,packaging:i.packaging,quantity:i.qty,oatMilk:i.oatMilk}));
 }
@@ -196,17 +210,36 @@ document.getElementById('placeOrder').onclick=async()=>{
  const token=getTurnstileToken();
  if(!token){status.textContent='Please complete the verification before placing your order.';return;}
  const d=checkoutData(), btn=document.getElementById('placeOrder');
+  const orderPayload = {
+  name: d.name,
+  phone: d.phone,
+  address: d.address,
+  landmark: d.landmark,
+  notes: d.notes,
+  payment: d.payment,
+  pin: {
+    lat: Number(d.pin.lat),
+    lng: Number(d.pin.lng)
+  },
+  items: orderItemsForBackend()
+};
+
+const idempotencyKey = getOrderAttempt(orderPayload);
  submitBusy=true;btn.disabled=true;status.textContent='Submitting your order…';
  try{
   const response=await fetch(`${window.DS_SUPABASE_URL}/functions/v1/submit-order`,{
    method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({name:d.name,phone:d.phone,address:d.address,landmark:d.landmark,
-    notes:d.notes,payment:d.payment,pin:{lat:Number(d.pin.lat),lng:Number(d.pin.lng)},
-    items:orderItemsForBackend(),turnstileToken:token})
+   body: JSON.stringify({
+  ...orderPayload,
+  idempotencyKey,
+  turnstileToken: token
+})
   });
   const result=await response.json();
   if(!response.ok || !result.order_number)throw new Error(result.error||'Could not save order.');
-  status.textContent='';showSavedConfirmation(result.order_number);
+  status.textContent='';
+pendingOrder = null;
+showSavedConfirmation(result.order_number);
  }catch(error){
   status.textContent='Order was not confirmed. '+(error?.message||'Please try again.');
  }finally{
@@ -234,6 +267,7 @@ async function showSavedConfirmation(orderNumber){
 };
 
 document.getElementById('newTestOrder').onclick=()=>{
+  pendingOrder = null;
   cart.clear(); updateUI();
   document.getElementById('checkoutForm').style.display='block';
   document.getElementById('orderConfirmation').classList.remove('show');
