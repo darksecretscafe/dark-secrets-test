@@ -1,0 +1,14 @@
+DARK SECRETS COFFEE — PHASE 2 TEST WEBSITE
+
+1. This ZIP is for dark-secrets-test only, NOT dark-secrets-coffee-menu (LIVE).
+2. Edit checkout-config.js: replace PASTE_YOUR_PUBLIC_CLOUDFLARE_SITE_KEY_HERE with your PUBLIC Cloudflare Turnstile Site Key (not secret key).
+3. Keep enabled: false until you are ready to conduct a controlled test. To test, set enabled: true and upload all files to the TEST repository root.
+4. Confirm the Supabase submit-order Edge Function has Turnstile validation, rate limiting, and the two secrets TURNSTILE_SECRET_KEY and RATE_LIMIT_HASH_SECRET. JWT legacy verification is OFF for this public endpoint.
+5. GitHub Pages URL: https://darksecretscafe.github.io/dark-secrets-test/
+6. Try ONE small TEST order using a test phone number and accurate GPS. It creates a REAL database record; label/decline it as a test in the admin dashboard. Do not use real customer data for testing.
+7. Verify the returned DS-XXXX order number in Supabase orders and the admin dashboard.
+8. Do not enable live orders until admin accept/decline, status updates, fulfillment and payment handling are verified.
+9. The backend phone-based limit is 3 attempts / 10 minutes. It is not a full anti-abuse solution.
+10. NEVER upload Cloudflare Secret Key, SUPABASE_SERVICE_ROLE_KEY, or RATE_LIMIT_HASH_SECRET to GitHub.
+
+NOTES: This ZIP does not modify the deployed Supabase Edge Function. It preserves existing admin.js and supabase-config.js.

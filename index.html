@@ -20,11 +20,11 @@
 <section class="menu">
   <div class="group">
     <h2>☕ Coffee</h2>
-    <div class="menu-item" data-name="Coffee Amerikano" data-price="100" data-drink="true"><span>Coffee Amerikano</span><b>₱100</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Coffee Americano" data-price="100" data-drink="true"><span>Coffee Americano</span><b>₱100</b><button class="add-btn" type="button">+ ADD</button></div>
     <div class="menu-item" data-name="Cafe Latte" data-price="115" data-drink="true"><span>Cafe Latte</span><b>₱115</b><button class="add-btn" type="button">+ ADD</button></div>
     <div class="menu-item" data-name="Spanish Latte" data-price="125" data-drink="true"><span>Spanish Latte</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
     <div class="menu-item" data-name="White Chocolate Mocha" data-price="125" data-drink="true"><span>White Chocolate Mocha</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
-    <div class="menu-item" data-name="Caramel Machiatto" data-price="125" data-drink="true"><span>Caramel Machiatto</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
+    <div class="menu-item" data-name="Caramel Macchiato" data-price="125" data-drink="true"><span>Caramel Macchiato</span><b>₱125</b><button class="add-btn" type="button">+ ADD</button></div>
     <small>All of our coffee drinks are standard double-shot.</small>
   </div>
   <div class="group">
@@ -68,6 +68,8 @@
         </fieldset>
         <label>Notes <small>(optional)</small><textarea id="orderNotes" rows="3" maxlength="150" placeholder="e.g. less ice, no straw"></textarea><span id="notesCount" class="char-count">0 / 150</span></label>
       </div>
+      <div id="turnstileMount" class="turnstile-mount" aria-label="Bot verification"></div>
+      <p id="submitStatus" role="status" aria-live="polite"></p>
       <div class="checkout-actions">
         <button id="placeOrder" class="place-order-btn" type="button" disabled aria-disabled="true">🚧 ONLINE ORDERING — UNDER CONSTRUCTION</button>
         <button id="messengerOrder" class="secondary-order-btn" type="button">COPY ORDER & OPEN MESSENGER</button>
@@ -84,6 +86,9 @@
     </div>
   </section>
 </div>
-<script src="order.js?v=phase1-delivery-only2"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script src="supabase-config.js"></script>
+<script src="checkout-config.js"></script>
+<script src="order.js?v=phase2-final1"></script>
 </body>
 </html>

@@ -75,7 +75,7 @@ function renderOrder(){
   });
   const {total,count}=totals(); modalTotal.textContent=total;
   document.getElementById('messengerOrder').disabled=count===0;
-  document.getElementById('placeOrder').disabled=true;
+  document.getElementById('placeOrder').disabled=!(window.DS_CHECKOUT?.enabled && count>0);
   if(!count) lines.innerHTML='<p style="text-align:center;color:#776a60;padding:18px 0">Your order is empty.</p>';
 }
 function changePackagingQty(name,pack,delta){
@@ -180,7 +180,57 @@ useLocationBtn.onclick=()=>{
   },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 };
 
-document.getElementById('placeOrder').onclick=()=>{
+let submitBusy=false;
+function orderItemsForBackend(){
+ const result=[];
+ cart.forEach(i=>{
+  if(i.isDrink){
+   if(i.regularQty)result.push({name:i.name,packaging:'Regular Cup',quantity:i.regularQty});
+   if(i.bottleQty)result.push({name:i.name,packaging:'Take Away Bottle',quantity:i.bottleQty});
+  }else if(i.qty)result.push({name:i.name,packaging:'Add-on',quantity:i.qty});
+ });
+ return result;
+}
+let turnstileWidgetId=null;
+function getTurnstileToken(){
+ if(!window.turnstile || turnstileWidgetId===null)return '';
+ return window.turnstile.getResponse(turnstileWidgetId)||'';
+}
+function initTurnstile(){
+ if(!window.DS_CHECKOUT?.enabled)return;
+ if(!window.DS_CHECKOUT.siteKey || window.DS_CHECKOUT.siteKey.includes('REPLACE'))return;
+ if(!window.turnstile){setTimeout(initTurnstile,200);return;}
+ turnstileWidgetId=window.turnstile.render('#turnstileMount',{
+  sitekey:window.DS_CHECKOUT.siteKey,action:'order_submit',theme:'auto'
+ });
+}
+initTurnstile();
+document.getElementById('placeOrder').onclick=async()=>{
+ const cfg=window.DS_CHECKOUT;
+ if(!cfg?.enabled || submitBusy || !totals().count || !validateCheckout())return;
+ const status=document.getElementById('submitStatus');
+ const token=getTurnstileToken();
+ if(!token){status.textContent='Please complete the verification before placing your order.';return;}
+ const d=checkoutData(), btn=document.getElementById('placeOrder');
+ submitBusy=true;btn.disabled=true;status.textContent='Submitting your order…';
+ try{
+  const response=await fetch(`${window.DS_SUPABASE_URL}/functions/v1/submit-order`,{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({name:d.name,phone:d.phone,address:d.address,landmark:d.landmark,
+    notes:d.notes,payment:d.payment,pin:{lat:Number(d.pin.lat),lng:Number(d.pin.lng)},
+    items:orderItemsForBackend(),turnstileToken:token})
+  });
+  const result=await response.json();
+  if(!response.ok || !result.order_number)throw new Error(result.error||'Could not save order.');
+  status.textContent='';showSavedConfirmation(result.order_number);
+ }catch(error){
+  status.textContent='Order was not confirmed. '+(error?.message||'Please try again.');
+ }finally{
+  submitBusy=false;btn.disabled=!(cfg?.enabled && totals().count);
+  if(window.turnstile && turnstileWidgetId!==null)window.turnstile.reset(turnstileWidgetId);
+ }
+};
+async function showSavedConfirmation(orderNumber){
   if(!totals().count || !validateCheckout()) return;
   const d=checkoutData(), {total}=totals();
   const card=document.getElementById('confirmationCard');
@@ -188,13 +238,18 @@ document.getElementById('placeOrder').onclick=()=>{
   let itemHtml=''; cart.forEach(i=>{if(i.isDrink){if(i.regularQty)itemHtml+=`<div class="summary-item"><span>${i.regularQty}× ${esc(i.name)}<small class="summary-addon"><br>↳ Regular Cup</small></span><strong>${peso(i.regularQty*i.price)}</strong></div>`;if(i.bottleQty)itemHtml+=`<div class="summary-item"><span>${i.bottleQty}× ${esc(i.name)}<small class="summary-addon"><br>↳ Take Away Bottle +₱${BOTTLE_FEE} each</small></span><strong>${peso(i.bottleQty*(i.price+BOTTLE_FEE))}</strong></div>`;}else itemHtml+=`<div class="summary-item"><span>${i.qty}× ${esc(i.name)}</span><strong>${peso(itemTotal(i))}</strong></div>`;});
   let deliveryHtml='';
   if(d.method==='Delivery') deliveryHtml=`<div class="summary-section summary-address"><strong>Delivery Details</strong><span>${esc(d.address)}</span>${d.landmark?`<span><br>Landmark: ${esc(d.landmark)}</span>`:''}${d.pin?`<br><a href="https://www.google.com/maps?q=${d.pin.lat},${d.pin.lng}" target="_blank" rel="noopener">📍 View exact pin location ↗</a>`:'<br><span>No pin location added</span>'}</div>`;
-  card.innerHTML=`<div><span>Customer</span><strong>${esc(d.name)}</strong></div><div><span>Mobile</span><strong>${esc(d.phone)}</strong></div><div class="summary-section"><strong>Items</strong>${itemHtml}</div><div><span>Total</span><strong>${peso(total)}</strong></div><div><span>Order Method</span><strong>${d.method}</strong></div><div><span>Payment</span><strong>${d.payment}</strong></div>${deliveryHtml}${d.notes?`<div class="summary-section summary-address"><strong>Notes</strong><span>${esc(d.notes)}</span></div>`:''}`;
+  card.innerHTML=`<div><span>Order Number</span><strong>${esc(orderNumber)}</strong></div><div><span>Customer</span><strong>${esc(d.name)}</strong></div><div><span>Mobile</span><strong>${esc(d.phone)}</strong></div><div class="summary-section"><strong>Items</strong>${itemHtml}</div><div><span>Total</span><strong>${peso(total)}</strong></div><div><span>Order Method</span><strong>${d.method}</strong></div><div><span>Payment</span><strong>${d.payment}</strong></div>${deliveryHtml}${d.notes?`<div class="summary-section summary-address"><strong>Notes</strong><span>${esc(d.notes)}</span></div>`:''}`;
+  document.querySelector('#orderConfirmation .phase-badge').textContent='ORDER SAVED';
+  document.querySelector('#orderConfirmation h3').textContent='Your order has been received.';
+  document.querySelector('#orderConfirmation > p').textContent='Your order was saved successfully. Please keep your order number for reference. Payment is not yet verified.';
+  document.getElementById('newTestOrder').textContent='CREATE ANOTHER TEST ORDER';
   document.getElementById('checkoutForm').style.display='none';
   document.getElementById('orderConfirmation').classList.add('show');
   document.querySelector('.order-sheet').scrollTo({top:0,behavior:'smooth'});
 };
 
 document.getElementById('newTestOrder').onclick=()=>{
+  cart.clear(); updateUI();
   document.getElementById('checkoutForm').style.display='block';
   document.getElementById('orderConfirmation').classList.remove('show');
   document.querySelector('.order-sheet').scrollTo({top:0,behavior:'smooth'});
@@ -211,3 +266,10 @@ document.getElementById('messengerOrder').onclick=async()=>{
   window.location.assign('https://m.me/DarkSecretsCoffee');
 };
 updateUI();
+
+// Checkout label follows TEST-only configuration.
+if (window.DS_CHECKOUT?.enabled) {
+  document.querySelector('.checkout-heading span').textContent = 'TEST CHECKOUT';
+  document.querySelector('.checkout-note').textContent = 'TEST ENVIRONMENT: orders are saved to the development database. Do not submit real customer orders.';
+  document.getElementById('placeOrder').textContent = 'PLACE TEST ORDER';
+}
