@@ -240,6 +240,9 @@ const idempotencyKey = getOrderAttempt(orderPayload);
   status.textContent='';
 pendingOrder = null;
 showSavedConfirmation(result.order_number);
+// Confirmation details are rendered; now empty the purchased cart.
+cart.clear();
+updateUI();
  }catch(error){
   status.textContent='Order was not confirmed. '+(error?.message||'Please try again.');
  }finally{
