@@ -11,12 +11,14 @@
  const text=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value==null?'':String(value);if(cls)el.className=cls;return el;};
  function show(auth){$('login').hidden=auth;$('dashboard').hidden=!auth;$('signout').hidden=!auth;}
  async function authorized(){
-  const {data:{user},error}=await db.auth.getUser();if(error||!user)return false;
-  // Membership is not directly readable by clients. Read access to orders is controlled by RLS.
-  // When no orders exist, the query below cannot prove admin membership; login alone is not an admin grant.
-  const {data,error:readError}=await db.from('orders').select('id').limit(1);
-  if(readError){msg('Cannot access orders. Check admin permissions: '+readError.message,true);return false;}
-  return true;
+ const { data: { user }, error: userError } = await db.auth.getUser();
+ if (userError || !user) return false;
+ const { data: isAdmin, error: adminError } = await db.rpc('is_admin');
+ if (adminError) {
+    msg('Admin verification failed: ' + adminError.message, true);
+    return false;
+  }
+ return isAdmin === true;
  }
  async function refresh(){
   msg('Loading orders…');$('refresh').disabled=true;
