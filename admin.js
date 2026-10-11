@@ -7,6 +7,44 @@
  if (!valid) { $('setup').hidden=false; msg('Configuration required before signing in.'); return; }
  const db = window.supabase.createClient(url,key);
  let currentOrders=[];
+ let pendingBaseline=null;
+ let soundEnabled=false;
+ let audioContext=null;
+ // Audio is enabled only by a user gesture. Browser/device settings may still mute it.
+ function playOrderChime(){
+  if(!soundEnabled || !audioContext)return;
+  try{
+   if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
+   const now=audioContext.currentTime;
+   [[0,660],[0.18,880],[0.38,1046]].forEach(([delay,freq])=>{
+    const osc=audioContext.createOscillator(),gain=audioContext.createGain();
+    osc.type='sine';osc.frequency.value=freq;
+    gain.gain.setValueAtTime(0.0001,now+delay);
+    gain.gain.exponentialRampToValueAtTime(0.13,now+delay+0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.16);
+    osc.connect(gain);gain.connect(audioContext.destination);
+    osc.start(now+delay);osc.stop(now+delay+0.17);
+   });
+  }catch(e){console.warn('Order alert sound unavailable',e);}
+ }
+ function trackNewPending(orders){
+  const ids=new Set(orders.filter(o=>o.status==='Pending').map(o=>o.id));
+  if(pendingBaseline!==null && [...ids].some(id=>!pendingBaseline.has(id)))playOrderChime();
+  pendingBaseline=ids;
+ }
+ $('soundToggle').onclick=async()=>{
+  if(soundEnabled){soundEnabled=false;$('soundToggle').textContent='🔇 Enable sound';$('soundToggle').setAttribute('aria-pressed','false');return;}
+  try{
+   const AudioCtor=window.AudioContext||window.webkitAudioContext;
+   if(!AudioCtor)throw new Error('Audio is not supported by this browser.');
+   audioContext=audioContext||new AudioCtor();
+   await audioContext.resume();
+   if(audioContext.state!=='running')throw new Error('Audio is blocked by the browser.');
+   soundEnabled=true;$('soundToggle').textContent='🔊 Sound on';$('soundToggle').setAttribute('aria-pressed','true');
+   // Preview sound only after explicit Enable Sound action.
+   playOrderChime();
+  }catch(e){msg('Could not enable sound: '+e.message,true);}
+ };
  let refreshInFlight=false;
  let pollTimer=null;
  const money=n=>'₱'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -29,7 +67,7 @@
   const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,delivery_address,landmark,gps_latitude,gps_longitude,notes,payment_method,total_amount,status,created_at,order_items(product_name,packaging,quantity,unit_price,subtotal)').order('created_at',{ascending:false}).limit(100);
   $('refresh').disabled=false;refreshInFlight=false;
   if(error){if(!quiet)msg('Could not load orders: '+error.message,true);return;}
-  currentOrders=data||[];render();if(!quiet)msg('Showing the 100 most recent orders.');
+  currentOrders=data||[];trackNewPending(currentOrders);render();if(!quiet)msg('Showing the 100 most recent orders.');
  }
  function renderPending(pending){
   $('pendingBadge').textContent=pending.length;
@@ -98,7 +136,7 @@
   if(!await authorized()){await db.auth.signOut();show(false);msg('Signed in, but order access was denied. Contact the project administrator.',true);return;}
   show(true);await refresh();startPolling();
  });
- $('signout').onclick=async()=>{stopPolling();await db.auth.signOut();currentOrders=[];show(false);$('pendingNotifications').hidden=true;msg('Signed out.');};
+ $('signout').onclick=async()=>{stopPolling();pendingBaseline=null;soundEnabled=false;$('soundToggle').textContent='🔇 Enable sound';$('soundToggle').setAttribute('aria-pressed','false');await db.auth.signOut();currentOrders=[];show(false);$('pendingNotifications').hidden=true;msg('Signed out.');};
  $('refresh').onclick=()=>refresh();$('statusFilter').onchange=render;
  $('pendingBell').onclick=()=>{const panel=$('pendingNotifications');panel.hidden=!panel.hidden;$('pendingBell').setAttribute('aria-expanded',String(!panel.hidden));};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboard').hidden)refresh(true);});

@@ -2,3 +2,6 @@
 
 /* TEST: in-app pending-order notifications */
 .pending-notify{margin:12px 0 16px}.pending-bell{display:flex;align-items:center;gap:10px;background:#f9f3ea;color:#291b13;border:1px solid #cbb7a6;width:100%;text-align:left}.pending-badge{margin-left:auto;background:#8d3930;color:#fff;border-radius:99px;padding:3px 10px;min-width:32px;text-align:center}.pending-notifications{background:#fffaf3;border:1px solid #ddcfc1;border-radius:13px;padding:15px;margin-top:8px}.pending-notifications[hidden]{display:none}.pending-notifications h3{font-size:15px;margin:0 0 12px}.pending-link{display:block;width:100%;text-align:left;background:#f1e6d8;color:#291b13;margin:6px 0;padding:12px}.pending-link:hover,.pending-link:focus{background:#e6d2bb}.pending-note{font-size:12px;margin:10px 0 0}
+
+/* Phase 2B: sound toggle alongside manual refresh */
+.toolbar-buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.toolbar-buttons button{white-space:nowrap}@media(max-width:520px){.toolbar-buttons{justify-content:flex-end}.toolbar-buttons button{padding:10px 11px;font-size:12px}}

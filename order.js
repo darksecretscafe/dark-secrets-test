@@ -277,7 +277,9 @@ document.getElementById('newTestOrder').onclick=()=>{
   document.getElementById('checkoutForm').style.display='block';
   document.getElementById('orderConfirmation').classList.remove('show');
   modal.classList.remove('confirmation-active');
-  document.querySelector('.order-sheet').scrollTo({top:0,behavior:'smooth'});
+  // Return to the actual menu, not the checkout modal.
+  closeModal();
+  document.querySelector('.menu').scrollIntoView({behavior:'smooth',block:'start'});
 };
 
 document.getElementById('messengerOrder').onclick=async()=>{
