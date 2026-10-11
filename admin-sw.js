@@ -1,5 +1,5 @@
 // Admin PWA install support only. Never cache customer orders, auth tokens, or API responses.
-const CACHE = 'ds-admin-test-shell-v1';
+const CACHE = 'ds-admin-test-shell-v2';
 const SHELL = ['./admin.html', './admin.css', './admin.js',
   './admin-manifest.webmanifest', './admin-icon-192.png', './admin-icon-512.png'];
 self.addEventListener('install', event => {
