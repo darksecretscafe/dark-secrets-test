@@ -7,6 +7,8 @@
  if (!valid) { $('setup').hidden=false; msg('Configuration required before signing in.'); return; }
  const db = window.supabase.createClient(url,key);
  let currentOrders=[];
+ let refreshInFlight=false;
+ let pollTimer=null;
  const money=n=>'₱'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
  const text=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value==null?'':String(value);if(cls)el.className=cls;return el;};
  function show(auth){$('login').hidden=auth;$('dashboard').hidden=!auth;$('signout').hidden=!auth;}
@@ -20,15 +22,40 @@
   }
  return isAdmin === true;
  }
- async function refresh(){
-  msg('Loading orders…');$('refresh').disabled=true;
+ async function refresh(quiet=false){
+  if(refreshInFlight)return;
+  refreshInFlight=true;
+  if(!quiet)msg('Loading orders…');$('refresh').disabled=true;
   const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,delivery_address,landmark,gps_latitude,gps_longitude,notes,payment_method,total_amount,status,created_at,order_items(product_name,packaging,quantity,unit_price,subtotal)').order('created_at',{ascending:false}).limit(100);
-  $('refresh').disabled=false;
-  if(error){msg('Could not load orders: '+error.message,true);return;}
-  currentOrders=data||[];render();msg('Showing the 100 most recent orders.');
+  $('refresh').disabled=false;refreshInFlight=false;
+  if(error){if(!quiet)msg('Could not load orders: '+error.message,true);return;}
+  currentOrders=data||[];render();if(!quiet)msg('Showing the 100 most recent orders.');
  }
+ function renderPending(pending){
+  $('pendingBadge').textContent=pending.length;
+  $('pendingBell').setAttribute('aria-label',`${pending.length} pending orders. Open notifications`);
+  const root=$('pendingNotificationList');root.replaceChildren();
+  if(!pending.length){root.append(text('p','No pending orders right now.','pending-note'));return;}
+  pending.forEach(o=>{
+   const b=text('button',`${o.order_number} · Pending · ${new Date(o.created_at).toLocaleString('en-PH')}`,'pending-link');
+   b.type='button';b.onclick=()=>{
+    $('statusFilter').value='Pending';render();
+    $('pendingNotifications').hidden=true;$('pendingBell').setAttribute('aria-expanded','false');
+    const cards=Array.from(document.querySelectorAll('.ordercard'));
+    const target=cards.find(c=>c.querySelector('h3')?.textContent===o.order_number);
+    target?.scrollIntoView({behavior:'smooth',block:'center'});
+   };root.append(b);
+  });
+ }
+ function startPolling(){
+  if(pollTimer)clearInterval(pollTimer);
+  pollTimer=setInterval(()=>{if(!$('dashboard').hidden && !document.hidden)refresh(true);},15000);
+ }
+ function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null;}}
  function render(){
-  $('pendingCount').textContent=currentOrders.filter(o=>o.status==='Pending').length;
+  const pending=currentOrders.filter(o=>o.status==='Pending');
+  $('pendingCount').textContent=pending.length;
+  renderPending(pending);
   $('progressCount').textContent=currentOrders.filter(o=>['Accepted','Preparing','Ready','Out for Delivery'].includes(o.status)).length;
   $('completedCount').textContent=currentOrders.filter(o=>o.status==='Completed').length;
   const root=$('orders');root.replaceChildren();const filter=$('statusFilter').value;
@@ -69,9 +96,11 @@
   $('password').value='';$('loginButton').disabled=false;
   if(error){msg('Sign in failed: '+error.message,true);return;}
   if(!await authorized()){await db.auth.signOut();show(false);msg('Signed in, but order access was denied. Contact the project administrator.',true);return;}
-  show(true);await refresh();
+  show(true);await refresh();startPolling();
  });
- $('signout').onclick=async()=>{await db.auth.signOut();currentOrders=[];show(false);msg('Signed out.');};
- $('refresh').onclick=refresh;$('statusFilter').onchange=render;
- (async()=>{const {data:{session}}=await db.auth.getSession();if(session&&await authorized()){show(true);await refresh();}else{show(false);msg('Sign in with your owner account.');}})();
+ $('signout').onclick=async()=>{stopPolling();await db.auth.signOut();currentOrders=[];show(false);$('pendingNotifications').hidden=true;msg('Signed out.');};
+ $('refresh').onclick=()=>refresh();$('statusFilter').onchange=render;
+ $('pendingBell').onclick=()=>{const panel=$('pendingNotifications');panel.hidden=!panel.hidden;$('pendingBell').setAttribute('aria-expanded',String(!panel.hidden));};
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboard').hidden)refresh(true);});
+ (async()=>{const {data:{session}}=await db.auth.getSession();if(session&&await authorized()){show(true);await refresh();startPolling();}else{show(false);msg('Sign in with your owner account.');}})();
 })();
