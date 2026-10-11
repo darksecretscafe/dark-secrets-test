@@ -8,43 +8,78 @@
  const db = window.supabase.createClient(url,key);
  let currentOrders=[];
  let pendingBaseline=null;
- let soundEnabled=false;
+ const SOUND_KEY='ds-admin-sound-preference-v1';
+ const ALARM_MAX_MS=120000, ALARM_REPEAT_MS=10000;
+ let soundEnabled=localStorage.getItem(SOUND_KEY)==='on';
  let audioContext=null;
- // Audio is enabled only by a user gesture. Browser/device settings may still mute it.
+ let alarmTimer=null;
+ // Only new orders observed while the dashboard is running trigger an alarm.
+ // Track individual order expiry so one order cannot restart another's alarm.
+ const activeAlarms=new Map();
+ function updateSoundButton(){
+  $('soundToggle').textContent=soundEnabled?'🔊 Sound on':'🔇 Enable sound';
+  $('soundToggle').setAttribute('aria-pressed',String(soundEnabled));
+ }
+ updateSoundButton();
+ async function activateAudio(){
+  const AudioCtor=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtor)throw new Error('Audio is not supported by this browser.');
+  audioContext=audioContext||new AudioCtor();
+  await audioContext.resume();
+  if(audioContext.state!=='running')throw new Error('Tap Enable sound to unlock audio on this device.');
+ }
  function playOrderChime(){
-  if(!soundEnabled || !audioContext)return;
+  if(!soundEnabled || !audioContext || audioContext.state!=='running')return;
   try{
-   if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});
    const now=audioContext.currentTime;
-   [[0,660],[0.18,880],[0.38,1046]].forEach(([delay,freq])=>{
+   // Four distinct double-tone pulses (~3.7 seconds) for a restaurant-style alert.
+   for(let n=0;n<4;n++)for(const [offset,freq] of [[0,740],[0.23,988]]){
+    const delay=n*0.95+offset;
     const osc=audioContext.createOscillator(),gain=audioContext.createGain();
-    osc.type='sine';osc.frequency.value=freq;
+    osc.type='triangle';osc.frequency.value=freq;
     gain.gain.setValueAtTime(0.0001,now+delay);
-    gain.gain.exponentialRampToValueAtTime(0.13,now+delay+0.025);
-    gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.16);
+    gain.gain.exponentialRampToValueAtTime(0.10,now+delay+0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.20);
     osc.connect(gain);gain.connect(audioContext.destination);
-    osc.start(now+delay);osc.stop(now+delay+0.17);
-   });
+    osc.start(now+delay);osc.stop(now+delay+0.21);
+   }
   }catch(e){console.warn('Order alert sound unavailable',e);}
+ }
+ function stopAlarmLoop(){if(alarmTimer){clearInterval(alarmTimer);alarmTimer=null;}}
+ function alarmTick(){
+  const now=Date.now();
+  for(const [id,expires] of activeAlarms){
+   if(expires<=now || !currentOrders.some(o=>o.id===id && o.status==='Pending'))activeAlarms.delete(id);
+  }
+  if(!activeAlarms.size || !soundEnabled){stopAlarmLoop();return;}
+  if(!document.hidden)playOrderChime();
+ }
+ function ensureAlarmLoop(){
+  if(!soundEnabled || !activeAlarms.size)return;
+  if(!alarmTimer){alarmTick();alarmTimer=setInterval(alarmTick,ALARM_REPEAT_MS);}
  }
  function trackNewPending(orders){
   const ids=new Set(orders.filter(o=>o.status==='Pending').map(o=>o.id));
-  if(pendingBaseline!==null && [...ids].some(id=>!pendingBaseline.has(id)))playOrderChime();
+  for(const id of activeAlarms.keys())if(!ids.has(id))activeAlarms.delete(id);
+  if(pendingBaseline!==null){
+   const now=Date.now();
+   for(const id of ids)if(!pendingBaseline.has(id))activeAlarms.set(id,now+ALARM_MAX_MS);
+  }
   pendingBaseline=ids;
+  if(!activeAlarms.size)stopAlarmLoop();else ensureAlarmLoop();
  }
  $('soundToggle').onclick=async()=>{
-  if(soundEnabled){soundEnabled=false;$('soundToggle').textContent='🔇 Enable sound';$('soundToggle').setAttribute('aria-pressed','false');return;}
+  if(soundEnabled){soundEnabled=false;localStorage.setItem(SOUND_KEY,'off');stopAlarmLoop();updateSoundButton();return;}
   try{
-   const AudioCtor=window.AudioContext||window.webkitAudioContext;
-   if(!AudioCtor)throw new Error('Audio is not supported by this browser.');
-   audioContext=audioContext||new AudioCtor();
-   await audioContext.resume();
-   if(audioContext.state!=='running')throw new Error('Audio is blocked by the browser.');
-   soundEnabled=true;$('soundToggle').textContent='🔊 Sound on';$('soundToggle').setAttribute('aria-pressed','true');
-   // Preview sound only after explicit Enable Sound action.
-   playOrderChime();
+   await activateAudio();soundEnabled=true;localStorage.setItem(SOUND_KEY,'on');updateSoundButton();
+   if(activeAlarms.size)ensureAlarmLoop();else playOrderChime();
   }catch(e){msg('Could not enable sound: '+e.message,true);}
  };
+ // A saved preference cannot bypass Android's requirement for a user gesture
+ // after some app launches. Show the preference; retry audio on user interaction.
+ document.addEventListener('pointerdown',()=>{
+  if(soundEnabled && audioContext?.state==='suspended')audioContext.resume().catch(()=>{});
+ },{passive:true});
  let refreshInFlight=false;
  let pollTimer=null;
  const money=n=>'₱'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -136,9 +171,9 @@
   if(!await authorized()){await db.auth.signOut();show(false);msg('Signed in, but order access was denied. Contact the project administrator.',true);return;}
   show(true);await refresh();startPolling();
  });
- $('signout').onclick=async()=>{stopPolling();pendingBaseline=null;soundEnabled=false;$('soundToggle').textContent='🔇 Enable sound';$('soundToggle').setAttribute('aria-pressed','false');await db.auth.signOut();currentOrders=[];show(false);$('pendingNotifications').hidden=true;msg('Signed out.');};
+ $('signout').onclick=async()=>{stopPolling();stopAlarmLoop();activeAlarms.clear();pendingBaseline=null;await db.auth.signOut();currentOrders=[];show(false);$('pendingNotifications').hidden=true;msg('Signed out.');};
  $('refresh').onclick=()=>refresh();$('statusFilter').onchange=render;
  $('pendingBell').onclick=()=>{const panel=$('pendingNotifications');panel.hidden=!panel.hidden;$('pendingBell').setAttribute('aria-expanded',String(!panel.hidden));};
- document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboard').hidden)refresh(true);});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboard').hidden){refresh(true);if(soundEnabled && activeAlarms.size)ensureAlarmLoop();}});
  (async()=>{const {data:{session}}=await db.auth.getSession();if(session&&await authorized()){show(true);await refresh();startPolling();}else{show(false);msg('Sign in with your owner account.');}})();
 })();
