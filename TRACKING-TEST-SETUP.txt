@@ -1,0 +1,11 @@
+DARK SECRETS COFFEE — TEST ONLY — CUSTOMER TRACKING
+
+IMPORTANT: This ZIP contains frontend changes only. DO NOT deploy it expecting tracking to work until DEV submit-order returns tracking_token. Existing checkout returns only order_number.
+
+DEV BACKEND: In the existing submit-order Edge Function, immediately after a successful create_customer_order_once RPC, look up tracking_token from orders by BOTH returned order_number AND submitted idempotency_key using the existing service-role db client. Return JSON {order_number:data,tracking_token:tracking.tracking_token} on success. Keep the entire existing Turnstile, validation, rate limiting, and RPC code unchanged. Do NOT deploy the earlier pasted draft as-is without considering saved-order/error retry behavior.
+
+RETRY SAFETY: If tracking lookup fails after order creation, do not tell customers to place a new order; preserve the idempotency key and let the same request be retried. A stronger design is a single atomic RPC returning both number and token. Idempotency keys must be kept private; anyone possessing full replay data and a valid Turnstile token might replay a checkout and recover the tracking token. Consider server-side one-time issuance / a separate claim credential for production.
+
+SECURITY: The existing track-order function trusts x-forwarded-for; verify the trusted edge gateway header or use platform rate limiting before production. The token in URL fragment is intentionally not sent to the static site server, but may be visible to browser extensions, browser history, and anyone with the link. No customer PII is returned by tracking endpoint.
+
+TEST: Upload the contents of the ZIP to TEST repository only. TEST customer menu, TEST Admin and LIVE are separate. Do not overwrite LIVE. New orders with valid token responses appear in My Orders on same browser/device; old orders do not automatically appear.
