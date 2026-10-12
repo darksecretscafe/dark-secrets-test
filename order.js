@@ -266,7 +266,9 @@ submitBusy=true;btn.disabled=true;status.textContent='Submitting your order…';
   if(!response.ok || !result.order_number || !/^[a-f0-9]{64}$/.test(result.tracking_token || ''))throw new Error(result.error||'Order confirmation incomplete. Retry the same order; do not create another.');
   status.textContent='';
 // Keep the retry credentials until the confirmation is displayed.
-showSavedConfirmation(result.order_number, result.tracking_token);
+if (!showSavedConfirmation(result.order_number, result.tracking_token)) {
+  throw new Error('Confirmation could not be displayed. Please retry the same order.');
+}
 clearOrderAttempt();
 // Confirmation details are rendered; now empty the purchased cart.
 cart.clear();
@@ -279,7 +281,7 @@ updateUI();
  }
 };
 function showSavedConfirmation(orderNumber, trackingToken){
-  if(!totals().count || !validateCheckout()) return;
+  if(!totals().count || !validateCheckout()) return false;
   const d=checkoutData(), {total}=totals();
   const card=document.getElementById('confirmationCard');
   const esc=v=>String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -310,6 +312,7 @@ function showSavedConfirmation(orderNumber, trackingToken){
   document.getElementById('orderConfirmation').classList.add('show');
   modal.classList.add('confirmation-active');
   document.querySelector('.order-sheet').scrollTo({top:0,behavior:'smooth'});
+  return true;
 };
 
 document.getElementById('newTestOrder').onclick=()=>{
