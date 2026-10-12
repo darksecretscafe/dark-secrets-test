@@ -265,8 +265,9 @@ submitBusy=true;btn.disabled=true;status.textContent='Submitting your order…';
   const result=await response.json();
   if(!response.ok || !result.order_number || !/^[a-f0-9]{64}$/.test(result.tracking_token || ''))throw new Error(result.error||'Order confirmation incomplete. Retry the same order; do not create another.');
   status.textContent='';
-clearOrderAttempt();
+// Keep the retry credentials until the confirmation is displayed.
 showSavedConfirmation(result.order_number, result.tracking_token);
+clearOrderAttempt();
 // Confirmation details are rendered; now empty the purchased cart.
 cart.clear();
 updateUI();
@@ -277,7 +278,7 @@ updateUI();
   if(window.turnstile && turnstileWidgetId!==null)window.turnstile.reset(turnstileWidgetId);
  }
 };
-async function showSavedConfirmation(orderNumber, trackingToken){
+function showSavedConfirmation(orderNumber, trackingToken){
   if(!totals().count || !validateCheckout()) return;
   const d=checkoutData(), {total}=totals();
   const card=document.getElementById('confirmationCard');
