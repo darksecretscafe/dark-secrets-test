@@ -7,6 +7,7 @@
 <title>Dark Secrets Coffee | Digital Menu</title>
 <meta name="description" content="Dark Secrets Coffee digital menu">
 <link rel="stylesheet" href="style.css?v=customizer2">
+<link rel="stylesheet" href="tracking.css?v=1">
 <style>
 /* TEST: show only the receipt when checkout has succeeded. */
 #orderModal.confirmation-active > .order-sheet > .eyebrow,
@@ -24,6 +25,7 @@
   <img class="brand-logo" src="assets/dark-secrets-logo.png" alt="Dark Secrets Coffee logo">
   <p>SAME BEANS • DIFFERENT STORIES</p>
 </header>
+<nav class="tracking-nav"><button id="myOrdersBtn" type="button">📦 MY ORDERS <span id="savedOrdersCount"></span></button></nav>
 <section class="visual"><img src="assets/dark-secrets-products.jpg" alt="Dark Secrets featured drinks and takeaway bottles"></section>
 <section class="welcome"><span>DARK SECRETS COFFEE</span><h1>What’s your<br>secret today?</h1><p>Choose your drinks, review your order, then message us to order.</p></section>
 
@@ -108,13 +110,17 @@
       <h3>Order looks good.</h3>
       <p>The checkout flow passed. In Phase 2, this is where the order will be saved and sent to the owner's admin page.</p>
       <div id="confirmationCard" class="confirmation-card"></div>
+      <div id="trackingActions" class="tracking-actions" hidden><a id="trackOrderLink" class="tracking-primary" href="track.html">TRACK MY ORDER ↗</a><button id="copyTrackingLink" type="button">COPY TRACKING LINK</button><p>Keep your private link safe. Anyone with it can view your order status.</p></div>
       <button id="newTestOrder" class="new-order-btn" type="button">CREATE ANOTHER TEST ORDER</button>
     </div>
   </section>
 </div>
+<div id="myOrdersModal" class="modal" aria-hidden="true"><div class="modal-backdrop" data-my-orders-close></div><section class="order-sheet" role="dialog" aria-modal="true" aria-labelledby="myOrdersTitle"><button class="close-btn" type="button" data-my-orders-close aria-label="Close">×</button><span class="eyebrow">DARK SECRETS COFFEE</span><h2 id="myOrdersTitle">My Orders</h2><p class="my-orders-note">Saved only on this browser. Keep your tracking links if you switch devices.</p><div id="myOrdersList"></div></section></div>
+<a class="floating-messenger" href="https://m.me/DarkSecretsCoffee" target="_blank" rel="noopener noreferrer" aria-label="Message Dark Secrets Coffee on Messenger" title="Message us">✉</a>
+<script src="tracking-common.js?v=1"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="supabase-config.js"></script>
 <script src="checkout-config.js"></script>
-<script src="order.js?v=phase2b-menu-return1"></script>
+<script src="order.js?v=tracking-test1"></script>
 </body>
 </html>

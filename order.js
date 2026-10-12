@@ -174,18 +174,43 @@ useLocationBtn.onclick=()=>{
 
 let submitBusy = false;
 let pendingOrder = null;
+const CHECKOUT_ATTEMPT_KEY = 'dsc-test-checkout-attempt-v2';
 
-function getOrderAttempt(payload) {
-  const fingerprint = JSON.stringify(payload);
-
-  if (!pendingOrder || pendingOrder.fingerprint !== fingerprint) {
+function randomCheckoutCredential() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+}
+async function getOrderAttempt(payload) {
+  // Only a fingerprint and private retry credentials are stored, never customer details.
+  const fingerprint = await sha256Hex(JSON.stringify(payload));
+  if (!pendingOrder) {
+    try { pendingOrder = JSON.parse(localStorage.getItem(CHECKOUT_ATTEMPT_KEY) || 'null'); }
+    catch { pendingOrder = null; }
+  }
+  if (!pendingOrder || pendingOrder.fingerprint !== fingerprint ||
+      !/^[a-f0-9]{64}$/.test(pendingOrder.credential || '') ||
+      !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/.test(pendingOrder.idempotencyKey || '')) {
     pendingOrder = {
       fingerprint,
-      idempotencyKey: crypto.randomUUID()
+      idempotencyKey: crypto.randomUUID(),
+      credential: randomCheckoutCredential()
     };
   }
-
-  return pendingOrder.idempotencyKey;
+  // Storage may be unavailable; in-memory retry still works in the current tab.
+  try { localStorage.setItem(CHECKOUT_ATTEMPT_KEY, JSON.stringify(pendingOrder)); } catch {}
+  return {
+    idempotencyKey: pendingOrder.idempotencyKey,
+    checkoutCredentialHash: await sha256Hex(pendingOrder.credential)
+  };
+}
+function clearOrderAttempt() {
+  pendingOrder = null;
+  try { localStorage.removeItem(CHECKOUT_ATTEMPT_KEY); } catch {}
 }
 function orderItemsForBackend(){
  return Array.from(cart.values()).map(i=>({name:i.name,packaging:i.packaging,quantity:i.qty,oatMilk:i.oatMilk}));
@@ -225,22 +250,23 @@ document.getElementById('placeOrder').onclick=async()=>{
   items: orderItemsForBackend()
 };
 
-const idempotencyKey = getOrderAttempt(orderPayload);
- submitBusy=true;btn.disabled=true;status.textContent='Submitting your order…';
+submitBusy=true;btn.disabled=true;status.textContent='Submitting your order…';
  try{
+  const { idempotencyKey, checkoutCredentialHash } = await getOrderAttempt(orderPayload);
   const response=await fetch(`${window.DS_SUPABASE_URL}/functions/v1/submit-order`,{
    method:'POST',headers:{'Content-Type':'application/json'},
    body: JSON.stringify({
   ...orderPayload,
   idempotencyKey,
+  checkoutCredentialHash,
   turnstileToken: token
 })
   });
   const result=await response.json();
-  if(!response.ok || !result.order_number)throw new Error(result.error||'Could not save order.');
+  if(!response.ok || !result.order_number || !/^[a-f0-9]{64}$/.test(result.tracking_token || ''))throw new Error(result.error||'Order confirmation incomplete. Retry the same order; do not create another.');
   status.textContent='';
-pendingOrder = null;
-showSavedConfirmation(result.order_number);
+clearOrderAttempt();
+showSavedConfirmation(result.order_number, result.tracking_token);
 // Confirmation details are rendered; now empty the purchased cart.
 cart.clear();
 updateUI();
@@ -251,7 +277,7 @@ updateUI();
   if(window.turnstile && turnstileWidgetId!==null)window.turnstile.reset(turnstileWidgetId);
  }
 };
-async function showSavedConfirmation(orderNumber){
+async function showSavedConfirmation(orderNumber, trackingToken){
   if(!totals().count || !validateCheckout()) return;
   const d=checkoutData(), {total}=totals();
   const card=document.getElementById('confirmationCard');
@@ -264,6 +290,20 @@ async function showSavedConfirmation(orderNumber){
   document.querySelector('#orderConfirmation .phase-badge').textContent='ORDER SAVED';
   document.querySelector('#orderConfirmation h3').textContent='Your order has been received.';
   document.querySelector('#orderConfirmation > p').textContent='Your order was saved successfully. Please keep your order number for reference. Payment is not yet verified.';
+  const trackingActions=document.getElementById('trackingActions');
+  trackingActions.hidden=true;
+  if(typeof trackingToken==='string' && /^[a-f0-9]{64}$/.test(trackingToken)){
+    const url=window.DS_TRACKING.makeUrl(trackingToken);
+    document.getElementById('trackOrderLink').href=url;
+    document.getElementById('copyTrackingLink').onclick=async()=>{
+      try { await navigator.clipboard.writeText(url); document.getElementById('copyTrackingLink').textContent='LINK COPIED ✓'; }
+      catch { window.prompt('Copy your private tracking link:',url); }
+    };
+    window.DS_TRACKING.saveOrder({order_number:orderNumber,token:trackingToken,created_at:new Date().toISOString()});
+    trackingActions.hidden=false;
+  } else {
+    document.querySelector('#orderConfirmation > p').textContent='Your order was saved. Tracking link is not available yet; please keep your order number.';
+  }
   document.getElementById('newTestOrder').textContent='CREATE ANOTHER TEST ORDER';
   document.getElementById('checkoutForm').style.display='none';
   document.getElementById('orderConfirmation').classList.add('show');
@@ -272,7 +312,7 @@ async function showSavedConfirmation(orderNumber){
 };
 
 document.getElementById('newTestOrder').onclick=()=>{
-  pendingOrder = null;
+  clearOrderAttempt();
   cart.clear(); updateUI();
   document.getElementById('checkoutForm').style.display='block';
   document.getElementById('orderConfirmation').classList.remove('show');
