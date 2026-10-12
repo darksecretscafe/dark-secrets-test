@@ -1,0 +1,12 @@
+DARK SECRETS COFFEE — ANDROID WEB PUSH REGISTRATION (TEST ONLY)
+
+1. Only upload these files to dark-secrets-test (NOT the LIVE repo).
+2. Before uploading, open push-config.js and replace PASTE_YOUR_PUBLIC_VAPID_KEY_HERE with the PUBLIC key from your VAPID generator. NEVER use the private key here.
+3. DEV Supabase must have the deployed register-push function and push_subscriptions table.
+4. On Android, install/open the TEST Admin PWA, sign in, tap Enable push notifications and allow Android notification permission.
+5. Check DEV Supabase > Table Editor > push_subscriptions for a new row. Do not share endpoint, p256dh or auth_key.
+6. The registration step does NOT send notifications. A separate authenticated Web Push sender must be implemented and connected to new Pending orders.
+7. Desktop will continue using the existing in-app sound; push permission UI is Android-only.
+8. Lock-screen delivery and sound depend on browser, device, notification channel, network and battery settings; repeating alarms while locked are not guaranteed.
+9. SECURITY FOLLOW-UP BEFORE WIDER USE: register-push currently uses an endpoint upsert; strengthen ownership validation so one admin cannot overwrite another user's existing endpoint. Also consider unregistering on sign-out and restricting CORS to TEST origin.
+10. The customer checkout, order status logic, existing audio alarm and LIVE site were not changed.

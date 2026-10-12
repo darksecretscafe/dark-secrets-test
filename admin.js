@@ -6,6 +6,56 @@
  const msg = (s,err=false) => { $('message').textContent=s || ''; $('message').className=err?'error':''; };
  if (!valid) { $('setup').hidden=false; msg('Configuration required before signing in.'); return; }
  const db = window.supabase.createClient(url,key);
+ // Android PWA push registration. No notification permission is requested on PC.
+ const pushPanel=$('pushSetup'), pushButton=$('enablePush'), pushStatus=$('pushStatus');
+ const isAndroid=/Android/i.test(navigator.userAgent);
+ const pushSupported=isAndroid && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+ const publicVapidKey=(window.DS_VAPID_PUBLIC_KEY||'').trim();
+ const setPushStatus=(message,error=false)=>{pushStatus.textContent=message;pushStatus.classList.toggle('error',error);};
+ function decodeVapidKey(value){
+  const padding='='.repeat((4-value.length%4)%4);
+  const raw=atob((value+padding).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from(raw,c=>c.charCodeAt(0));
+ }
+ async function updatePushUI(){
+  pushPanel.hidden=!pushSupported;
+  if(!pushSupported)return;
+  if(!publicVapidKey || publicVapidKey.includes('PASTE_')){
+   pushButton.disabled=true;setPushStatus('Setup pending: add your PUBLIC VAPID key to push-config.js.');return;
+  }
+  if(Notification.permission==='denied'){
+   pushButton.disabled=true;setPushStatus('Notifications blocked. Enable them in Android app/site settings.',true);return;
+  }
+  try{
+   const reg=await navigator.serviceWorker.ready;
+   const subscription=await reg.pushManager.getSubscription();
+   if(subscription){pushButton.textContent='Re-register push';setPushStatus('Push subscription found. Tap Re-register if alerts are not arriving.');}
+   else setPushStatus('Tap Enable push notifications to register this Android device.');
+  }catch(e){setPushStatus('Push setup unavailable: '+e.message,true);}
+ }
+ pushButton.addEventListener('click',async()=>{
+  pushButton.disabled=true;setPushStatus('Registering Android device…');
+  try{
+   if(!pushSupported)throw new Error('Android push is not supported in this browser.');
+   if(!publicVapidKey || publicVapidKey.includes('PASTE_'))throw new Error('Public VAPID key is missing.');
+   const permission=await Notification.requestPermission();
+   if(permission!=='granted')throw new Error('Notification permission not granted.');
+   const registration=await navigator.serviceWorker.ready;
+   let subscription=await registration.pushManager.getSubscription();
+   if(!subscription){subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decodeVapidKey(publicVapidKey)});}
+   const {data:{session},error:sessionError}=await db.auth.getSession();
+   if(sessionError || !session?.access_token)throw new Error('Please sign in again.');
+   const response=await fetch(`${url}/functions/v1/register-push`,{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':key},
+    body:JSON.stringify({subscription:subscription.toJSON()})
+   });
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok || !result.success)throw new Error(result.error||`Registration failed (${response.status})`);
+   setPushStatus('Android device registered! Waiting for server push sender setup.');
+   pushButton.textContent='Re-register push';
+  }catch(e){setPushStatus('Push registration failed: '+e.message,true);}
+  finally{pushButton.disabled=false;}
+ });
  let currentOrders=[];
  let pendingBaseline=null;
  const SOUND_KEY='ds-admin-sound-preference-v1';
@@ -169,11 +219,11 @@
   $('password').value='';$('loginButton').disabled=false;
   if(error){msg('Sign in failed: '+error.message,true);return;}
   if(!await authorized()){await db.auth.signOut();show(false);msg('Signed in, but order access was denied. Contact the project administrator.',true);return;}
-  show(true);await refresh();startPolling();
+  show(true);await refresh();startPolling();updatePushUI();
  });
  $('signout').onclick=async()=>{stopPolling();stopAlarmLoop();activeAlarms.clear();pendingBaseline=null;await db.auth.signOut();currentOrders=[];show(false);$('pendingNotifications').hidden=true;msg('Signed out.');};
  $('refresh').onclick=()=>refresh();$('statusFilter').onchange=render;
  $('pendingBell').onclick=()=>{const panel=$('pendingNotifications');panel.hidden=!panel.hidden;$('pendingBell').setAttribute('aria-expanded',String(!panel.hidden));};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboard').hidden){refresh(true);if(soundEnabled && activeAlarms.size)ensureAlarmLoop();}});
- (async()=>{const {data:{session}}=await db.auth.getSession();if(session&&await authorized()){show(true);await refresh();startPolling();}else{show(false);msg('Sign in with your owner account.');}})();
+ (async()=>{const {data:{session}}=await db.auth.getSession();if(session&&await authorized()){show(true);await refresh();startPolling();updatePushUI();}else{show(false);msg('Sign in with your owner account.');}})();
 })();

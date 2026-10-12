@@ -5,3 +5,8 @@
 
 /* Phase 2B: sound toggle alongside manual refresh */
 .toolbar-buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.toolbar-buttons button{white-space:nowrap}@media(max-width:520px){.toolbar-buttons{justify-content:flex-end}.toolbar-buttons button{padding:10px 11px;font-size:12px}}
+
+/* Android Web Push setup (TEST only) */
+.push-setup{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fffaf3;border:1px solid #cbb7a6;border-radius:13px;padding:14px;margin-top:18px}
+.push-setup[hidden]{display:none}.push-setup strong{font-size:14px}.push-setup p{font-size:12px;margin:5px 0 0}.push-setup p.error{color:#a22b23}.push-setup button{flex-shrink:0}
+@media(max-width:520px){.push-setup{align-items:stretch;flex-direction:column}.push-setup button{width:100%}}
