@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#f5efe6">
 <title>Dark Secrets Coffee | Digital Menu</title>
 <meta name="description" content="Dark Secrets Coffee digital menu">
-<link rel="stylesheet" href="style.css?v=customizer2">
-<link rel="stylesheet" href="tracking.css?v=1">
+<link rel="stylesheet" href="style.css?v=ui-test3">
+<link rel="stylesheet" href="tracking.css?v=ui-test3">
 <style>
 /* TEST: show only the receipt when checkout has succeeded. */
 #orderModal.confirmation-active > .order-sheet > .eyebrow,
@@ -22,10 +22,10 @@
 <body>
 <main>
 <header class="brand">
+  <nav class="tracking-nav" aria-label="Order tracking"><button id="myOrdersBtn" type="button">📦 MY ORDERS <span id="savedOrdersCount"></span></button></nav>
   <img class="brand-logo" src="assets/dark-secrets-logo.png" alt="Dark Secrets Coffee logo">
   <p>SAME BEANS • DIFFERENT STORIES</p>
 </header>
-<nav class="tracking-nav"><button id="myOrdersBtn" type="button">📦 MY ORDERS <span id="savedOrdersCount"></span></button></nav>
 <section class="visual"><img src="assets/dark-secrets-products.jpg" alt="Dark Secrets featured drinks and takeaway bottles"></section>
 <section class="welcome"><span>DARK SECRETS COFFEE</span><h1>What’s your<br>secret today?</h1><p>Choose your drinks, review your order, then message us to order.</p></section>
 
@@ -116,8 +116,14 @@
   </section>
 </div>
 <div id="myOrdersModal" class="modal" aria-hidden="true"><div class="modal-backdrop" data-my-orders-close></div><section class="order-sheet" role="dialog" aria-modal="true" aria-labelledby="myOrdersTitle"><button class="close-btn" type="button" data-my-orders-close aria-label="Close">×</button><span class="eyebrow">DARK SECRETS COFFEE</span><h2 id="myOrdersTitle">My Orders</h2><p class="my-orders-note">Saved only on this browser. Keep your tracking links if you switch devices.</p><div id="myOrdersList"></div></section></div>
-<a class="floating-messenger" href="https://m.me/DarkSecretsCoffee" target="_blank" rel="noopener noreferrer" aria-label="Message Dark Secrets Coffee on Messenger" title="Message us">✉</a>
+<div class="messenger-widget" aria-label="Messenger support">
+  <span class="messenger-tip" id="messengerTip">Need help? 👋</span>
+  <a class="floating-messenger" href="https://m.me/DarkSecretsCoffee" target="_blank" rel="noopener noreferrer" aria-label="Chat with Dark Secrets Coffee on Messenger" title="Chat on Messenger">
+    <svg class="messenger-logo" viewBox="0 0 36 36" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M18 2C9.16 2 2 8.63 2 16.8c0 4.64 2.32 8.77 5.94 11.48V34l5.43-2.98c1.47.41 3.02.63 4.63.63 8.84 0 16-6.63 16-14.85S26.84 2 18 2Zm1.59 19.91-4.08-4.35-7.96 4.35 8.75-9.28 4.19 4.35 7.85-4.35-8.75 9.28Z"/></svg>
+  </a>
+</div>
 <script src="tracking-common.js?v=1"></script>
+<script src="messenger-ui.js?v=1" defer></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="supabase-config.js"></script>
 <script src="checkout-config.js"></script>
