@@ -1,18 +1,32 @@
-// Test-only Messenger side tab. No order, checkout, or routing changes.
+// Messenger side tab v3 — small edge handle, aligned reveal, mobile tap support.
 (function () {
-  const tip = document.getElementById('messengerTip');
-  const link = document.querySelector('.messenger-widget .floating-messenger');
-  if (!tip || !link) return;
-  let hideTimer;
-  const hide = () => { clearTimeout(hideTimer); tip.classList.remove('visible'); };
-  const show = (autoHide = true) => {
-    clearTimeout(hideTimer);
-    tip.classList.add('visible');
-    if (autoHide) hideTimer = setTimeout(hide, 5000);
+  const widget = document.querySelector('.messenger-widget');
+  const link = widget && widget.querySelector('.floating-messenger');
+  if (!widget || !link) return;
+  let timer;
+  let expanded = false;
+  const close = () => {
+    clearTimeout(timer);
+    expanded = false;
+    widget.classList.remove('is-expanded');
   };
-  setTimeout(() => show(true), 3000);
-  link.addEventListener('mouseenter', () => show(false));
-  link.addEventListener('mouseleave', hide);
-  link.addEventListener('focus', () => show(false));
-  link.addEventListener('blur', hide);
+  const open = (autoClose) => {
+    clearTimeout(timer);
+    expanded = true;
+    widget.classList.add('is-expanded');
+    if (autoClose) timer = setTimeout(close, 5000);
+  };
+  // Show the aligned help prompt briefly after load.
+  setTimeout(() => open(true), 3000);
+  // On touch devices, first tap opens the handle; second tap opens Messenger.
+  link.addEventListener('click', (event) => {
+    if (!expanded) {
+      event.preventDefault();
+      open(true);
+    }
+  });
+  widget.addEventListener('mouseenter', () => open(false));
+  widget.addEventListener('mouseleave', close);
+  link.addEventListener('focus', () => open(false));
+  link.addEventListener('blur', () => { if (!widget.matches(':hover')) close(); });
 })();
