@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f5efe6">
 <title>Dark Secrets Coffee | Digital Menu</title>
 <meta name="description" content="Dark Secrets Coffee digital menu">
-<link rel="stylesheet" href="style.css?v=ui-test3">
+<link rel="stylesheet" href="style.css?v=payment-phase1-20261015">
 <link rel="stylesheet" href="tracking.css?v=messenger-fix3">
 <style>
 /* TEST: show only the receipt when checkout has succeeded. */
@@ -63,7 +63,7 @@
   <select id="customPack" class="custom-select"><option value="Regular Cup">Regular Cup</option><option value="Take Away Bottle">Take Away Bottle (+₱15)</option></select>
   <label id="customOatRow" class="custom-oat"><input type="checkbox" id="customOat"> Sub Oat Milk (+₱30)</label>
   <div class="custom-quantity"><strong>Quantity</strong><div class="qty"><button type="button" id="customMinus">−</button><b id="customQty">1</b><button type="button" id="customPlus">+</button></div></div>
-  <div class="order-total"><span>Total</span><strong id="customPrice">₱0</strong></div>
+  <div class="order-total"><span>Drinks subtotal</span><strong id="customPrice">₱0</strong></div>
   <p id="customError" class="custom-error" role="alert"></p>
   <button id="customAdd" class="order-main-btn custom-add" type="button">ADD TO CART</button>
  </section>
@@ -76,7 +76,7 @@
     <span class="eyebrow">DARK SECRETS COFFEE</span>
     <h2 id="orderTitle">Your Order</h2>
     <div id="orderLines" class="order-lines"></div>
-    <div class="order-total"><span>Total</span><strong>₱<span id="modalTotal">0</span></strong></div>
+    <div class="order-total"><span>Drinks subtotal</span><strong>₱<span id="modalTotal">0</span></strong></div>
     <div id="checkoutForm" class="checkout-step">
       <div class="checkout-heading"><h3>Checkout</h3><span>COMING SOON</span></div>
       <div class="customer-fields">
@@ -87,13 +87,7 @@
           <div class="pin-location-box"><div><strong>Exact Pin Location <span class="required-mark">*</span></strong><small>Required for delivery</small></div><button id="useLocation" class="location-btn" type="button">📍 USE MY LOCATION</button><p id="locationStatus">No pin location added yet.</p><p id="pinError" class="pin-error" role="alert" hidden>Please add your GPS pin before placing an order.</p><a id="viewPin" class="view-pin" href="#" target="_blank" rel="noopener" hidden>VIEW PIN ON MAP ↗</a></div>
           <label>Landmark <small>(optional)</small><input id="deliveryLandmark" type="text" maxlength="50" placeholder="e.g. near church, gate color"></label>
         </div>
-        <fieldset class="payment-method" id="paymentField">
-          <legend>Payment Method <span class="required-mark">*</span></legend>
-          <label><input type="radio" name="paymentMethod" value="Cash"> Cash</label>
-          <label><input type="radio" name="paymentMethod" value="GCash"> GCash</label>
-          <label><input type="radio" name="paymentMethod" value="Maya"> Maya</label>
-          <span class="field-error">Please choose a payment method.</span>
-        </fieldset>
+        <div class="delivery-payment-notice" role="note"><strong>🚚 Delivery via Lalamove or GrabExpress</strong><p>Submit your order first. The owner will check the courier fee and confirm your final total before you pay.</p><small>Payment options (GCash / Maya) will be shown on your private tracking page after the delivery fee is confirmed.</small></div>
         <label>Notes <small>(optional)</small><textarea id="orderNotes" rows="3" maxlength="150" placeholder="e.g. less ice, no straw"></textarea><span id="notesCount" class="char-count">0 / 150</span></label>
       </div>
       <div id="turnstileMount" class="turnstile-mount" aria-label="Bot verification"></div>
@@ -108,7 +102,7 @@
       <div class="confirmation-icon">✓</div>
       <span class="phase-badge">COMING SOON</span>
       <h3>Order looks good.</h3>
-      <p>The checkout flow passed. In Phase 2, this is where the order will be saved and sent to the owner's admin page.</p>
+      <p>Delivery fee is being calculated. Please wait for final payment instructions.</p>
       <div id="confirmationCard" class="confirmation-card"></div>
       <div id="trackingActions" class="tracking-actions" hidden><a id="trackOrderLink" class="tracking-primary" href="track.html">TRACK MY ORDER ↗</a><button id="copyTrackingLink" type="button">COPY TRACKING LINK</button><p>Keep your private link safe. Anyone with it can view your order status.</p></div>
       <button id="newTestOrder" class="new-order-btn" type="button">CREATE ANOTHER TEST ORDER</button>
@@ -127,6 +121,6 @@
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="supabase-config.js"></script>
 <script src="checkout-config.js"></script>
-<script src="order.js?v=tracking-test1"></script>
+<script src="order.js?v=payment-phase1-20261015"></script>
 </body>
 </html>

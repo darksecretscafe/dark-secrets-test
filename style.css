@@ -75,3 +75,9 @@
 
 /* Per-drink customization dialog */
 .customize-sheet{max-width:520px}.custom-label{display:block;font-size:13px;font-weight:700;margin:18px 0 8px}.custom-select{width:100%;padding:13px;border:1px solid #b9a595;border-radius:12px;background:#fffaf4;color:#281c15;font:15px Arial,sans-serif}.custom-oat{display:flex;align-items:center;gap:10px;margin:18px 0;font-size:14px;font-weight:600}.custom-oat[hidden]{display:none}.custom-oat input{width:20px;height:20px;accent-color:#38251b}.custom-quantity{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #d6c9bd;padding:18px 0}.custom-add{width:100%;margin-top:6px}.custom-error{color:#a33224;font-size:12px;min-height:1em}.order-line{align-items:center}
+
+/* Phase 2: payment deferred until the delivery fee is confirmed */
+.delivery-payment-notice{background:#fffaf4;border:1px solid #c9b7a7;border-radius:12px;padding:14px;color:#34231a;line-height:1.5}
+.delivery-payment-notice strong{display:block;font-size:13px}
+.delivery-payment-notice p{margin:7px 0;font-size:12px}
+.delivery-payment-notice small{display:block;font-size:11px;line-height:1.5}

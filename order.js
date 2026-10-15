@@ -100,7 +100,7 @@ function closeModal(){modal.classList.remove('open');modal.setAttribute('aria-hi
 document.getElementById('openOrder').onclick=openModal;
 document.querySelectorAll('[data-close]').forEach(x=>x.onclick=closeModal);
 
-document.querySelectorAll('input[name="paymentMethod"]').forEach(r=>r.addEventListener('change',()=>document.getElementById('paymentField').classList.remove('has-error')));
+
 ['customerName','customerPhone','deliveryAddress'].forEach(id=>document.getElementById(id).addEventListener('input',e=>e.target.closest('label')?.classList.remove('has-error')));
 const phoneInput=document.getElementById('customerPhone');
 phoneInput.addEventListener('input',()=>{phoneInput.value=phoneInput.value.replace(/\D/g,'').slice(0,11);});
@@ -114,14 +114,14 @@ function checkoutData(){
     method:'Delivery',
     address:document.getElementById('deliveryAddress').value.trim(),
     landmark:document.getElementById('deliveryLandmark').value.trim(),
-    payment:document.querySelector('input[name="paymentMethod"]:checked')?.value || '',
+    payment:'Pending', // Compatibility placeholder: backend must support deferred payment.
     notes:notes.value.trim(),
     pin:pinLocation
   };
 }
 function validateCheckout(){
   const d=checkoutData(); let ok=true;
-  const checks=[['nameField',!!d.name],['phoneField',/^\d{11}$/.test(d.phone)],['paymentField',!!d.payment]];
+  const checks=[['nameField',!!d.name],['phoneField',/^\d{11}$/.test(d.phone)]];
   checks.push(['addressField',!!d.address]);
   const pinValid=!!(d.pin && Number.isFinite(Number(d.pin.lat)) && Number.isFinite(Number(d.pin.lng)));
   document.getElementById('pinError').hidden=pinValid;
@@ -135,7 +135,7 @@ function orderText(){
  const d=checkoutData(),{total}=totals();
  const out=['Hi Dark Secrets! I’d like to order:',''];
  cart.forEach(i=>out.push(`• ${i.qty}× ${i.name} (${i.packaging}${i.oatMilk?' · Sub Oat Milk':''}) — ${peso(itemTotal(i))}`));
- out.push('',`Total: ${peso(total)}`,`Name: ${d.name||'-'}`,`Mobile: ${d.phone||'-'}`,`Order Method: ${d.method}`,`Payment: ${d.payment||'-'}`);
+ out.push('',`Drinks subtotal: ${peso(total)}`,`Name: ${d.name||'-'}`,`Mobile: ${d.phone||'-'}`,`Order Method: ${d.method}`,'Payment: Awaiting delivery fee confirmation');
  out.push(`Address: ${d.address||'-'}`);if(d.landmark)out.push(`Landmark: ${d.landmark}`);
  if(d.pin)out.push(`Pin: https://www.google.com/maps?q=${d.pin.lat},${d.pin.lng}`);
  if(d.notes)out.push(`Notes: ${d.notes}`);
@@ -289,10 +289,10 @@ function showSavedConfirmation(orderNumber, trackingToken){
     itemHtml+=`<div class="summary-item"><span>${i.qty}× ${esc(i.name)}<small class="summary-addon"><br>↳ ${esc(i.packaging)}${i.oatMilk?' · Sub Oat Milk':''}</small></span><strong>${peso(itemTotal(i))}</strong></div>`;
   });
   const deliveryHtml=`<div class="summary-section summary-address"><strong>Delivery Address</strong><span>${esc(d.address)}</span></div>${d.landmark?`<div><span>Landmark</span><strong>${esc(d.landmark)}</strong></div>`:''}${d.pin?`<div><span>GPS Pin</span><strong>${esc(d.pin.lat)}, ${esc(d.pin.lng)}</strong></div>`:''}`;
-  card.innerHTML=`<div><span>Order Number</span><strong>${esc(orderNumber)}</strong></div><div><span>Customer</span><strong>${esc(d.name)}</strong></div><div><span>Mobile</span><strong>${esc(d.phone)}</strong></div><div class="summary-section"><strong>Items</strong>${itemHtml}</div><div><span>Total</span><strong>${peso(total)}</strong></div><div><span>Order Method</span><strong>${d.method}</strong></div><div><span>Payment</span><strong>${d.payment}</strong></div>${deliveryHtml}${d.notes?`<div class="summary-section summary-address"><strong>Notes</strong><span>${esc(d.notes)}</span></div>`:''}`;
-  document.querySelector('#orderConfirmation .phase-badge').textContent='ORDER SAVED';
-  document.querySelector('#orderConfirmation h3').textContent='Your order has been received.';
-  document.querySelector('#orderConfirmation > p').textContent='Your order was saved successfully. Please keep your order number for reference. Payment is not yet verified.';
+  card.innerHTML=`<div><span>Order Number</span><strong>${esc(orderNumber)}</strong></div><div><span>Customer</span><strong>${esc(d.name)}</strong></div><div><span>Mobile</span><strong>${esc(d.phone)}</strong></div><div class="summary-section"><strong>Items</strong>${itemHtml}</div><div><span>Drinks subtotal (delivery not included)</span><strong>${peso(total)}</strong></div><div><span>Delivery</span><strong>Lalamove / GrabExpress — fee pending</strong></div><div><span>Payment</span><strong>Not yet required</strong></div>${deliveryHtml}${d.notes?`<div class="summary-section summary-address"><strong>Notes</strong><span>${esc(d.notes)}</span></div>`:''}`;
+  document.querySelector('#orderConfirmation .phase-badge').textContent='AWAITING DELIVERY FEE';
+  document.querySelector('#orderConfirmation h3').textContent='Order #'+orderNumber+' received.';
+  document.querySelector('#orderConfirmation > p').textContent='Delivery fee is being calculated. Please wait for final payment instructions.';
   const trackingActions=document.getElementById('trackingActions');
   trackingActions.hidden=true;
   if(typeof trackingToken==='string' && /^[a-f0-9]{64}$/.test(trackingToken)){
@@ -341,6 +341,6 @@ updateUI();
 // Checkout label follows TEST-only configuration.
 if (window.DS_CHECKOUT?.enabled) {
   document.querySelector('.checkout-heading span').textContent = 'TEST CHECKOUT';
-  document.querySelector('.checkout-note').textContent = 'TEST ENVIRONMENT: orders are saved to the development database. Do not submit real customer orders.';
+  document.querySelector('.checkout-note').textContent = 'TEST ONLY: No payment is collected at checkout. The backend must support Pending payment and delivery-fee updates before full testing.';
   document.getElementById('placeOrder').textContent = 'PLACE TEST ORDER';
 }
