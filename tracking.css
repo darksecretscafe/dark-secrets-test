@@ -6,12 +6,12 @@
 .brand .tracking-nav{position:absolute;top:15px;right:16px;padding:0;background:transparent;text-align:right;z-index:2}
 .brand .tracking-nav button{font-size:10px;padding:10px 12px;background:rgba(255,250,244,.85);white-space:nowrap}
 @media(max-width:500px){.brand{padding-top:70px}.brand .tracking-nav{right:12px;top:12px}.brand .tracking-nav button{font-size:9px;padding:9px 10px}}
-/* UI-only test: subtle Messenger edge tab; clear of sticky cart and safe area */
-.messenger-widget{position:fixed;right:5px;bottom:calc(94px + env(safe-area-inset-bottom, 0px));z-index:45;display:flex;align-items:center;gap:8px;pointer-events:none}
-.messenger-widget .floating-messenger{position:static;display:grid;place-items:center;width:46px;height:46px;background:rgba(0,132,255,.75);color:#fff;border:1px solid rgba(255,255,255,.48);border-radius:50%;box-shadow:0 6px 18px rgba(22,38,54,.18);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:auto;transition:background .2s,transform .2s}
-.messenger-widget .floating-messenger:hover,.messenger-widget .floating-messenger:focus-visible{background:rgba(0,132,255,1);transform:translateX(-2px)}
-.messenger-logo{display:block;width:27px;height:27px}
-.messenger-tip{font-size:12px;font-weight:700;color:#65452f;padding:9px 12px;background:rgba(255,250,244,.75);border:1px solid rgba(255,255,255,.65);border-radius:13px;box-shadow:0 5px 17px rgba(41,28,19,.1);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);white-space:nowrap;opacity:0;transform:translateX(8px);transition:opacity .35s,transform .35s}
-.messenger-tip.visible{opacity:1;transform:translateX(0)}
-@media(max-width:500px){.messenger-widget{right:4px;bottom:calc(92px + env(safe-area-inset-bottom, 0px))}.messenger-widget .floating-messenger{width:43px;height:43px}.messenger-logo{width:25px;height:25px}.messenger-tip{font-size:11px;padding:8px 10px}}
+/* Test-only Messenger edge tab: compact when idle, expands left without covering menu controls. */
+.messenger-widget{position:fixed;right:0;bottom:calc(94px + env(safe-area-inset-bottom, 0px));z-index:45;display:flex;align-items:center;gap:0;pointer-events:none}
+.messenger-widget .floating-messenger{position:relative;display:grid;place-items:center;width:34px;height:48px;min-width:34px;border-radius:24px 0 0 24px;background:rgba(0,132,255,.75);color:#fff;border:1px solid rgba(255,255,255,.5);border-right:0;box-shadow:-4px 5px 15px rgba(22,38,54,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:auto;transition:background .25s,width .3s ease;outline-offset:-3px}
+.messenger-widget .floating-messenger:hover,.messenger-widget .floating-messenger:focus-visible{background:rgba(0,132,255,1);width:42px}
+.messenger-logo{display:block;width:25px;height:25px;flex:none}
+.messenger-tip{font-size:12px;font-weight:700;color:#65452f;padding:9px 12px;background:rgba(255,250,244,.75);border:1px solid rgba(255,255,255,.65);border-radius:13px;box-shadow:0 5px 17px rgba(41,28,19,.1);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);white-space:nowrap;opacity:0;visibility:hidden;transform:translateX(10px);transition:opacity .3s,transform .3s,visibility .3s;margin-right:8px}
+.messenger-tip.visible{opacity:1;visibility:visible;transform:translateX(0)}
+@media(max-width:500px){.messenger-widget{bottom:calc(92px + env(safe-area-inset-bottom, 0px))}.messenger-widget .floating-messenger{width:30px;min-width:30px;height:44px}.messenger-widget .floating-messenger:hover,.messenger-widget .floating-messenger:focus-visible{width:38px}.messenger-logo{width:23px;height:23px}.messenger-tip{font-size:11px;padding:8px 10px}}
 @media(prefers-reduced-motion:reduce){.messenger-widget .floating-messenger,.messenger-tip{transition:none}}
