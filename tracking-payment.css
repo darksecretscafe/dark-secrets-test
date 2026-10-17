@@ -1,4 +1,4 @@
-/* TEST customer tracking payment summary (display only; no payment collection) */
+/* TEST tracking payment UI */
 .tracking-payment{border-top:1px solid #c9b5a5;margin-top:22px;padding-top:16px}
 .tracking-payment[hidden]{display:none}
 .tracking-payment h2{font:normal 24px Georgia,serif;color:#2a1c15;margin:0 0 16px}
@@ -6,3 +6,13 @@
 .tracking-payment-row strong{font-size:18px;color:#2a1c15}
 .tracking-payment p{font-size:12px;line-height:1.6;color:#6c5547}
 .tracking-payment-status{font-weight:700}
+.ds-pay-options{border-top:1px solid #c9b5a5;margin-top:18px;padding-top:18px}
+.ds-pay-options h3{font:normal 22px Georgia,serif;margin:0 0 14px}
+.ds-pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ds-pay-method{padding:13px 10px;border:1px solid #bda998;border-radius:12px;background:#f9f3eb;color:#2a1c15;font-weight:700;cursor:pointer}
+.ds-pay-method[aria-pressed="true"]{background:#2a1c15;color:white}
+.ds-pay-detail{margin-top:14px}
+.ds-pay-qr{display:block;max-width:100%;width:310px;max-height:430px;object-fit:contain;margin:12px auto;border-radius:12px}
+.ds-pay-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.ds-pay-actions button,.ds-pay-actions a,.ds-pay-messenger{display:inline-block;padding:12px 15px;background:#2a1c15;color:#fff;border:0;border-radius:10px;text-decoration:none;font-size:12px;font-weight:700;cursor:pointer}
+.ds-pay-messenger{background:#0866ff;margin-top:8px}
