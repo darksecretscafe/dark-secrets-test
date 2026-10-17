@@ -1,0 +1,8 @@
+/* TEST customer tracking payment summary (display only; no payment collection) */
+.tracking-payment{border-top:1px solid #c9b5a5;margin-top:22px;padding-top:16px}
+.tracking-payment[hidden]{display:none}
+.tracking-payment h2{font:normal 24px Georgia,serif;color:#2a1c15;margin:0 0 16px}
+.tracking-payment-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:10px 0;border-bottom:1px solid #d5c4b5;font-size:14px}
+.tracking-payment-row strong{font-size:18px;color:#2a1c15}
+.tracking-payment p{font-size:12px;line-height:1.6;color:#6c5547}
+.tracking-payment-status{font-weight:700}
