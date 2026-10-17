@@ -150,7 +150,7 @@
   if(refreshInFlight)return;
   refreshInFlight=true;
   if(!quiet)msg('Loading orders…');$('refresh').disabled=true;
-  const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,delivery_address,landmark,gps_latitude,gps_longitude,notes,payment_method,total_amount,status,created_at,order_items(product_name,packaging,quantity,unit_price,subtotal)').order('created_at',{ascending:false}).limit(100);
+  const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,delivery_address,landmark,gps_latitude,gps_longitude,notes,payment_method,total_amount,delivery_fee,final_total,payment_status,courier,status,created_at,order_items(product_name,packaging,quantity,unit_price,subtotal)').order('created_at',{ascending:false}).limit(100);
   $('refresh').disabled=false;refreshInFlight=false;
   if(error){if(!quiet)msg('Could not load orders: '+error.message,true);return;}
   const nextOrders = data || [];
@@ -211,9 +211,9 @@
      const a=text('a','View customer GPS pin');a.href=`https://www.google.com/maps?q=${encodeURIComponent(o.gps_latitude+','+o.gps_longitude)}`;a.target='_blank';a.rel='noopener noreferrer';card.append(a);
    }
    if(o.notes)card.append(text('div','Notes: '+o.notes,'meta'));
-   card.append(text('div','Payment: '+o.payment_method,'meta'));
+   card.append(text('div','Payment status: '+(o.payment_status || 'Awaiting Delivery Fee'),'meta'));
    const items=text('div','','items');(o.order_items||[]).forEach(i=>items.append(text('div',`${i.quantity} × ${i.product_name} (${i.packaging}) — ${money(i.subtotal)}`,'item')));card.append(items);
-   const total=text('div','','total');total.append(text('span','Total'),text('span',money(o.total_amount)));card.append(total);
+   const total=text('div','','total');total.append(text('span','Drinks subtotal'),text('span',money(o.total_amount)));card.append(total);
    const actions=text('div','','actions');
    const transitions={Pending:[['Accept','Accepted',''],['Decline','Declined','reject']],Accepted:[['Start preparing','Preparing','secondary']],Preparing:[['Mark ready','Ready','secondary']],Ready:[['Out for delivery','Out for Delivery','secondary']], 'Out for Delivery':[['Complete','Completed','']]};
    (transitions[o.status]||[]).forEach(([label,next,cls])=>{

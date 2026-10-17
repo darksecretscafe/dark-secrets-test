@@ -79,9 +79,19 @@
             p_order_id: order.id, p_courier: courier.value, p_delivery_fee: amount
           });
           if (error) throw error;
-          notify(`Delivery fee saved for ${order.order_number}. Refreshing…`);
+          // Update the visible panel immediately after the server confirms saving.
+          // Also refresh the original order list so its payment status stays in sync.
+          const {data: updated, error: readError} = await db.from('orders')
+            .select('id,order_number,total_amount,delivery_fee,final_total,payment_status,courier,status')
+            .eq('id', order.id).single();
+          if (readError) throw readError;
+          if (card.isConnected) {
+            panel.remove();
+            appendFeePanel(card, updated);
+          }
+          notify(`Delivery fee saved for ${order.order_number}.`);
+          document.activeElement?.blur?.();
           document.getElementById('refresh')?.click();
-          setTimeout(() => { if (!dashboard.hidden) refreshPanels(); }, 800);
         } catch (err) {
           notify('Could not save delivery fee: ' + (err.message || 'Unknown error'), true);
         } finally { saving = false; save.disabled = false; }
