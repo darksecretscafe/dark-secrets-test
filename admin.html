@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#241912"><title>Dark Secrets Coffee | Admin</title><link rel="stylesheet" href="admin.css"><link rel="stylesheet" href="admin-delivery.css">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#241912"><title>Dark Secrets Coffee | Admin</title><link rel="stylesheet" href="admin.css"><link rel="stylesheet" href="admin-delivery.css"><link rel="stylesheet" href="admin-payment.css">
 <link rel="manifest" href="admin-manifest.webmanifest">
 <link rel="icon" href="admin-icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="admin-icon-192.png">
@@ -14,7 +14,7 @@
  <div id="pendingNotifications" class="pending-notifications" hidden><h3>Orders awaiting acceptance</h3><div id="pendingNotificationList"></div><p class="pending-note">Updates automatically while the admin is open.</p></div>
  </section><div class="filters"><label for="statusFilter">Show</label><select id="statusFilter"><option value="all">All orders</option><option value="Pending">Pending</option><option value="Accepted">Accepted</option><option value="Preparing">Preparing</option><option value="Ready">Ready</option><option value="Out for Delivery">Out for Delivery</option><option value="Completed">Completed</option><option value="Declined">Declined</option><option value="Cancelled">Cancelled</option></select></div><div id="orders" class="orders"></div></section>
 <p id="message" role="status" aria-live="polite"></p><footer>Admin access only · Phase 2 development</footer></main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="supabase-config.js"></script><script src="push-config.js"></script><script src="admin.js"></script><script src="admin-delivery.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="supabase-config.js"></script><script src="push-config.js"></script><script src="admin.js"></script><script src="admin-delivery.js"></script><script src="admin-payment.js?v=1"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
