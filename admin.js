@@ -132,6 +132,7 @@
  },{passive:true});
  let refreshInFlight=false;
  let pollTimer=null;
+ let pendingOrderRender=false;
  const money=n=>'₱'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
  const text=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value==null?'':String(value);if(cls)el.className=cls;return el;};
  function show(auth){$('login').hidden=auth;$('dashboard').hidden=!auth;$('signout').hidden=!auth;}
@@ -152,7 +153,23 @@
   const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,delivery_address,landmark,gps_latitude,gps_longitude,notes,payment_method,total_amount,status,created_at,order_items(product_name,packaging,quantity,unit_price,subtotal)').order('created_at',{ascending:false}).limit(100);
   $('refresh').disabled=false;refreshInFlight=false;
   if(error){if(!quiet)msg('Could not load orders: '+error.message,true);return;}
-  currentOrders=data||[];trackNewPending(currentOrders);render();if(!quiet)msg('Showing the 100 most recent orders.');
+  const nextOrders = data || [];
+  const changed = JSON.stringify(nextOrders) !== JSON.stringify(currentOrders);
+  if (changed) {
+    currentOrders = nextOrders;
+    trackNewPending(currentOrders);
+    // Preserve an active delivery-fee form while the owner is typing.
+    if (document.activeElement?.closest?.('.ds-delivery-form')) {
+      pendingOrderRender = true;
+    } else {
+      pendingOrderRender = false;
+      render();
+    }
+  } else if (pendingOrderRender && !document.activeElement?.closest?.('.ds-delivery-form')) {
+    pendingOrderRender = false;
+    render();
+  }
+  if(!quiet)msg('Showing the 100 most recent orders.');
  }
  function renderPending(pending){
   $('pendingBadge').textContent=pending.length;
@@ -223,6 +240,15 @@
  });
  $('signout').onclick=async()=>{stopPolling();stopAlarmLoop();activeAlarms.clear();pendingBaseline=null;await db.auth.signOut();currentOrders=[];show(false);$('pendingNotifications').hidden=true;msg('Signed out.');};
  $('refresh').onclick=()=>refresh();$('statusFilter').onchange=render;
+ $('orders').addEventListener('focusout', event => {
+   if (!event.target.closest?.('.ds-delivery-form')) return;
+   setTimeout(() => {
+     if (pendingOrderRender && !document.activeElement?.closest?.('.ds-delivery-form')) {
+       pendingOrderRender=false;
+       render();
+     }
+   }, 150);
+ });
  $('pendingBell').onclick=()=>{const panel=$('pendingNotifications');panel.hidden=!panel.hidden;$('pendingBell').setAttribute('aria-expanded',String(!panel.hidden));};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboard').hidden){refresh(true);if(soundEnabled && activeAlarms.size)ensureAlarmLoop();}});
  (async()=>{const {data:{session}}=await db.auth.getSession();if(session&&await authorized()){show(true);await refresh();startPolling();updatePushUI();}else{show(false);msg('Sign in with your owner account.');}})();
