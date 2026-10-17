@@ -16,6 +16,7 @@
 <p id="message" role="status" aria-live="polite"></p><footer>Admin access only · Phase 2 development</footer></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="supabase-config.js"></script><script src="push-config.js"></script><script src="admin.js"></script><script src="admin-delivery.js"></script><script src="admin-payment.js?v=1"></script>
 <script>
+<script src="admin-section-order.js"></script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./admin-sw.js').catch(err => {
