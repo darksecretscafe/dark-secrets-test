@@ -1,0 +1,12 @@
+/* Additive styling for the TEST admin delivery fee controls */
+.ds-delivery-panel{border-top:1px solid #d8c7b6;margin-top:16px;padding-top:14px}
+.ds-delivery-panel h4{font:normal 20px Georgia,serif;margin:0 0 8px}
+.ds-delivery-note{color:#705f51;font-size:12px;margin:8px 0}
+.ds-delivery-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:7px 0}
+.ds-delivery-final{font-size:17px;border-top:1px dashed #cbb7a6;padding-top:9px;font-weight:700}
+.ds-delivery-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;padding:14px;background:#f2e7d9;border:1px solid #d8c7b6;border-radius:12px}
+.ds-delivery-form label{display:block;font-size:12px}
+.ds-delivery-form input,.ds-delivery-form select{width:100%;margin-top:5px}
+.ds-delivery-form .ds-delivery-note{grid-column:1/-1;margin:0}
+.ds-delivery-form button{grid-column:1/-1}
+@media(max-width:520px){.ds-delivery-form{grid-template-columns:1fr}.ds-delivery-form .ds-delivery-note,.ds-delivery-form button{grid-column:1}}
