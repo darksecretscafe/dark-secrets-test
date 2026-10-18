@@ -6,6 +6,7 @@
  const msg = (s,err=false) => { $('message').textContent=s || ''; $('message').className=err?'error':''; };
  if (!valid) { $('setup').hidden=false; msg('Configuration required before signing in.'); return; }
  const db = window.supabase.createClient(url,key);
+ window.DS_adminDb = db; // Reuse authenticated admin client for cancellation UI.
  // Android PWA push registration. No notification permission is requested on PC.
  const pushPanel=$('pushSetup'), pushButton=$('enablePush'), pushStatus=$('pushStatus');
  const isAndroid=/Android/i.test(navigator.userAgent);

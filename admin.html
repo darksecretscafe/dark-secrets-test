@@ -95,6 +95,12 @@
 </select>
 </div>
 
+<section id="cancellationManagement" class="panel" aria-label="Cancellation requests" style="margin:20px 0">
+<h2>Cancellation Requests <span id="cancellationCount" aria-live="polite">0</span></h2>
+<p id="cancellationMessage" role="status" aria-live="polite">Sign in to view requests.</p>
+<button type="button" id="cancellationRefresh" class="ghost">↻ Refresh requests</button>
+<div id="cancellationList"></div>
+</section>
 <div id="orders" class="orders"></div>
 </section>
 
@@ -110,6 +116,7 @@
 <script src="admin-payment.js?v=1"></script>
 <script src="admin-section-order.js"></script>
 <script src="admin-paid-guard.js?v=1"></script>
+<script src="admin-cancellation.js?v=1"></script>
 
 <script>
 if ('serviceWorker' in navigator) {
