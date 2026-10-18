@@ -31,6 +31,24 @@
 .ds-cancellation-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;padding:2px 7px;margin-left:6px;border-radius:999px;background:#a12626;color:white;font-size:12px;font-weight:800}
 .ds-cancellation-badge[hidden]{display:none!important}
 @media(max-width:540px){.ds-admin-tabs{gap:6px}.ds-admin-tabs .ds-tab{flex:1 1 100px;padding:12px 7px;font-size:12px}}
+/* Refund management: compact summary cards, details only when expanded. */
+.ds-refund-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ds-refund-list{display:grid;gap:12px;margin-top:16px}
+.ds-refund-card{border:1px solid #decfc0;border-radius:15px;background:#fffaf5;padding:17px;box-sizing:border-box}
+.ds-refund-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.ds-refund-head h3{margin:0}
+.ds-refund-meta{color:#71594c;font-size:13px;margin:8px 0}
+.ds-refund-amount{font-size:24px;font-weight:800;margin:10px 0}
+.ds-refund-pill{background:#f0e1ce;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700}
+.ds-refund-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.ds-refund-details{margin-top:14px;padding-top:14px;border-top:1px solid #e5d8c9}
+.ds-refund-details[hidden]{display:none!important}
+.ds-refund-details p{overflow-wrap:anywhere}
+.ds-refund-warning{font-size:13px;color:#824620}
+.ds-refund-field{display:grid;gap:5px;margin:12px 0}
+.ds-refund-field input{max-width:420px}
+.ds-refund-badge{display:inline-flex;min-width:20px;justify-content:center;margin-left:6px;padding:2px 7px;border-radius:999px;background:#a12626;color:#fff;font-size:12px}
+.ds-refund-badge[hidden]{display:none!important}
 /* Match Order History: full-width cancellation cards and simple heading. */
 #panelCancellations #cancellationManagement{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:0;background:transparent;border:0;box-shadow:none}
 #panelCancellations #cancellationList,#panelCancellations #cancellationHistoryList{width:100%;max-width:none}
@@ -111,6 +129,7 @@
 <button type="button" id="tabActive" class="ds-tab active" role="tab" aria-selected="true" aria-controls="panelActive">Active Orders</button>
 <button type="button" id="tabHistory" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelHistory">Order History <span id="tabHistoryCount">(0)</span></button>
 <button type="button" id="tabCancellations" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelCancellations">Cancellations <span id="tabCancellationCount" class="ds-cancellation-badge" aria-label="Pending cancellation requests" hidden></span></button>
+<button type="button" id="tabRefunds" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelRefunds">Refunds <span id="tabRefundCount" class="ds-refund-badge" hidden></span></button>
 </nav>
 <section id="panelActive" class="ds-tab-panel" role="tabpanel" aria-labelledby="tabActive">
 <div class="filters">
@@ -141,13 +160,22 @@
 </section>
 </section>
 
+<section id="panelRefunds" class="ds-tab-panel" role="tabpanel" aria-labelledby="tabRefunds" hidden>
+<div class="ds-refund-toolbar">
+ <div><h2>Refund Management</h2><p>Approved paid cancellations · Manual GCash/Maya refunds only</p></div>
+ <button type="button" id="refundRefresh" class="ghost">↻ Refresh refunds</button>
+</div>
+<p id="refundMessage" role="status" aria-live="polite">Sign in to view refunds.</p>
+<div id="refundList" class="ds-refund-list"></div>
+</section>
+
 <p id="message" role="status" aria-live="polite"></p>
 <footer>Admin access only · Phase 2 development</footer>
 </main>
 
 <script>
 (() => {
- const names=['Active','History','Cancellations'];
+ const names=['Active','History','Cancellations','Refunds'];
  function selectTab(name){
   if(!names.includes(name))return;
   for(const item of names){
@@ -195,6 +223,7 @@
 <script src="admin-section-order.js"></script>
 <script src="admin-paid-guard.js?v=1"></script>
 <script src="admin-cancellation.js?v=4"></script>
+<script src="admin-refunds.js?v=1"></script>
 
 <script>
 if ('serviceWorker' in navigator) {
