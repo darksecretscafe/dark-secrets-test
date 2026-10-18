@@ -31,6 +31,17 @@
 .ds-cancellation-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;padding:2px 7px;margin-left:6px;border-radius:999px;background:#a12626;color:white;font-size:12px;font-weight:800}
 .ds-cancellation-badge[hidden]{display:none!important}
 @media(max-width:540px){.ds-admin-tabs{gap:6px}.ds-admin-tabs .ds-tab{flex:1 1 100px;padding:12px 7px;font-size:12px}}
+/* Match Order History: full-width cancellation cards and simple heading. */
+#panelCancellations #cancellationManagement{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:0;background:transparent;border:0;box-shadow:none}
+#panelCancellations #cancellationList,#panelCancellations #cancellationHistoryList{width:100%;max-width:none}
+#panelCancellations .ordercard{width:100%;max-width:none;box-sizing:border-box;margin:12px 0}
+#panelCancellations .ds-cancel-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#panelCancellations .ds-cancel-card-head h3{margin:0}
+#panelCancellations .ds-cancel-tag{border-radius:999px;background:#e9d9ca;color:#291b14;padding:5px 10px;font-size:12px;font-weight:700}
+#panelCancellations .ds-cancel-detail{font-size:13px;color:#765748;margin:10px 0}
+#panelCancellations .ds-cancel-reason{padding:12px 0;border-top:1px dotted #d8c7b7;border-bottom:1px dotted #d8c7b7;white-space:pre-wrap;overflow-wrap:anywhere}
+#panelCancellations .ds-cancel-section-title{margin:24px 0 8px}
+#panelCancellations #cancellationHistory summary{padding:14px 0!important}
 </style>
 </head>
 <body>
@@ -122,7 +133,8 @@
 </section>
 <section id="panelCancellations" class="ds-tab-panel" role="tabpanel" aria-labelledby="tabCancellations" hidden>
 <section id="cancellationManagement" class="panel" aria-label="Cancellation requests">
-<h2>Pending Cancellation Requests: <span id="cancellationCount" aria-live="polite">0</span></h2>
+<h2>Cancellation Requests</h2>
+<p>Pending requests: <strong id="cancellationCount" aria-live="polite">0</strong></p>
 <p id="cancellationMessage" role="status" aria-live="polite">Sign in to view requests.</p>
 <button type="button" id="cancellationRefresh" class="ghost">↻ Refresh requests</button>
 <div id="cancellationList"></div>
@@ -186,7 +198,7 @@
 <script src="admin-payment.js?v=1"></script>
 <script src="admin-section-order.js"></script>
 <script src="admin-paid-guard.js?v=1"></script>
-<script src="admin-cancellation.js?v=2"></script>
+<script src="admin-cancellation.js?v=3"></script>
 
 <script>
 if ('serviceWorker' in navigator) {

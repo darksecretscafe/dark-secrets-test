@@ -39,21 +39,29 @@
   if(!pending.length)list.append(el('p','No pending cancellation requests.'));
   for(const r of requests){
    const o=r.orders||{};
-   const card=el('article','', 'ordercard');card.style.marginTop='12px';
-   card.append(el('h3',`${o.order_number||'Order'} · ${r.request_status}`));
-   card.append(el('p',`Order: ${o.status||'Unknown'} · Payment: ${o.payment_status||'Unknown'}`));
-   card.append(el('p',`Reason: ${r.reason}`));
-   card.append(el('p',`Requested: ${new Date(r.requested_at).toLocaleString('en-PH')}`));
+   const card=el('article','','ordercard');
+   const head=el('div','','ds-cancel-card-head');
+   head.append(el('h3',o.order_number||'Order'),el('span',r.request_status,'ds-cancel-tag'));
+   card.append(head);
+   card.append(el('p',`Order: ${o.status||'Unknown'} · Payment: ${o.payment_status||'Unknown'}`,'ds-cancel-detail'));
+   card.append(el('p',`Reason: ${r.reason}`,'ds-cancel-reason'));
+   card.append(el('p',`Requested: ${new Date(r.requested_at).toLocaleString('en-PH')}`,'ds-cancel-detail'));
    if(r.request_status==='Requested'){
     const actions=el('div','','actions');
     for(const decision of ['Approved','Rejected']){
      const button=el('button',decision==='Approved'?'Approve cancellation':'Reject request',decision==='Rejected'?'secondary':'');
-     button.type='button';button.onclick=()=>review(r,decision,button);actions.append(button);
+     button.type='button';
+     if(decision==='Approved' && o.payment_status==='Paid'){
+      button.disabled=true;
+      button.title='Paid order: refund workflow required before approval';
+     }
+     button.onclick=()=>review(r,decision,button);actions.append(button);
     }
     if(o.payment_status==='Paid')card.append(el('p','Paid order: approval requires the separate refund workflow. You may reject the request.'));
     card.append(actions);list.append(card);
    }else{
-    card.append(el('p',`Refund: ${r.refund_status}`));historyList.append(card);
+    card.append(el('p',`Refund: ${r.refund_status}`,'ds-cancel-detail'));
+    historyList.append(card);
    }
   }
  }
