@@ -136,6 +136,7 @@
  let pendingOrderRender=false;
  let historyStatus="All";
  let refundedOrderIds=new Set();
+ let refundDetailsByOrder=new Map();
  const money=n=>'₱'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
  const text=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value==null?'':String(value);if(cls)el.className=cls;return el;};
  function show(auth){$('login').hidden=auth;$('dashboard').hidden=!auth;$('signout').hidden=!auth;}
@@ -156,17 +157,20 @@
   const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,delivery_address,landmark,gps_latitude,gps_longitude,notes,payment_method,total_amount,delivery_fee,final_total,payment_status,payment_verified_at,courier,status,created_at,order_items(product_name,packaging,quantity,unit_price,subtotal)').order('created_at',{ascending:false}).limit(100);
   $('refresh').disabled=false;refreshInFlight=false;
   if(error){if(!quiet)msg('Could not load orders: '+error.message,true);return;}
-  const previousRefundIds=[...refundedOrderIds].sort().join(",");
+  const previousRefundDetails=JSON.stringify([...refundDetailsByOrder.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]))));
   const nextOrders = data || [];
   // Refunds are recorded on cancellation requests, not as an order status.
   // A failed optional lookup must not block ordinary order management.
   try {
    const {data:refundRows,error:refundError}=await db.from('order_cancellation_requests')
-    .select('order_id').eq('refund_status','Refunded').limit(1000);
-   if(!refundError) refundedOrderIds=new Set((refundRows||[]).map(r=>r.order_id));
+    .select('order_id,refund_status,refund_amount').eq('refund_status','Refunded').limit(1000);
+   if(!refundError){
+    refundDetailsByOrder=new Map((refundRows||[]).map(r=>[r.order_id,{status:r.refund_status,amount:r.refund_amount}]));
+    refundedOrderIds=new Set(refundDetailsByOrder.keys());
+   }
   } catch (_) { /* Keep the last known refund mapping. */ }
   const changed = JSON.stringify(nextOrders) !== JSON.stringify(currentOrders);
-  if (changed || previousRefundIds!==[...refundedOrderIds].sort().join(",")) {
+  if (changed || previousRefundDetails!==JSON.stringify([...refundDetailsByOrder.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]))))) {
     currentOrders = nextOrders;
     trackNewPending(currentOrders);
     // Preserve an active delivery-fee form while the owner is typing.
@@ -233,7 +237,11 @@
    [...list.map(o=>({o,destination:root})),...visibleHistory.map(o=>({o,destination:historyRoot}))].forEach(({o,destination})=>{
    const card=text('article','','ordercard'),head=text('div','','cardhead'),left=text('div');
    left.append(text('h3',o.order_number));left.append(text('div',new Date(o.created_at).toLocaleString('en-PH'),'meta'));
-   head.append(left,text('span',o.status,'tag'));card.append(head);
+   const badges=text('div','','ds-order-badges');
+   badges.append(text('span',o.status,'tag'));
+   const refund=refundDetailsByOrder.get(o.id);
+   if(refund)badges.append(text('span','Refunded','tag ds-refunded-tag'));
+   head.append(left,badges);card.append(head);
    card.append(text('div',`${o.customer_name} · ${o.customer_phone}`,'meta'));
    card.append(text('div',`Delivery: ${o.delivery_address}${o.landmark?' · '+o.landmark:''}`,'meta'));
    if(Number.isFinite(o.gps_latitude)&&Number.isFinite(o.gps_longitude)){
@@ -243,6 +251,22 @@
    card.append(text('div','Payment status: '+(o.payment_status || 'Awaiting Delivery Fee'),'meta'));
    const items=text('div','','items');(o.order_items||[]).forEach(i=>items.append(text('div',`${i.quantity} × ${i.product_name} (${i.packaging}) — ${money(i.subtotal)}`,'item')));card.append(items);
    const total=text('div','','total');total.append(text('span','Drinks subtotal'),text('span',money(o.total_amount)));card.append(total);
+   if(refund){
+    const fee=Number(o.delivery_fee);
+    const paid=Number(o.final_total);
+    const refundAmount=Number(refund.amount);
+    if(o.delivery_fee!=null && Number.isFinite(fee)){
+     const delivery=text('div','','ds-refund-line');delivery.append(text('span','Delivery fee'),text('span',money(fee)));card.append(delivery);
+    }else card.append(text('div','Delivery fee: Not available','meta'));
+    if(o.final_total!=null && Number.isFinite(paid)){
+     const paidRow=text('div','','ds-refund-line');paidRow.append(text('strong','Total paid'),text('strong',money(paid)));card.append(paidRow);
+    }else card.append(text('div','Total paid: Not available','meta'));
+    const refundRow=text('div','','ds-refund-line ds-refund-amount');
+    refundRow.append(text('strong','Amount refunded'),text('strong',refund.amount!=null && Number.isFinite(refundAmount)?money(refundAmount):'Not available'));card.append(refundRow);
+    if(o.final_total!=null && refund.amount!=null && Number.isFinite(paid) && Number.isFinite(refundAmount) && Math.abs(paid-refundAmount)>0.005){
+     card.append(text('div','Refund amount differs from the recorded total paid. Please review Refund Management.','ds-refund-warning'));
+    }
+   }
    const actions=text('div','','actions');
    const transitions={Pending:[['Accept','Accepted',''],['Decline','Declined','reject']],Accepted:[['Start preparing','Preparing','secondary']],Preparing:[['Mark ready','Ready','secondary']],Ready:[['Out for delivery','Out for Delivery','secondary']], 'Out for Delivery':[['Complete','Completed','']]};
    (transitions[o.status]||[]).forEach(([label,next,cls])=>{
