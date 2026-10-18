@@ -14,6 +14,9 @@
  const mask=n=>typeof n==='string'&&n.length>=4 ? n.slice(0,2)+'•••••••'+n.slice(-2) : 'Unavailable';
  const validAmount=n=>n!==null&&n!==undefined&&Number.isFinite(Number(n))&&Number(n)>0;
  let busy=false, records=[], expanded=null, lastLoad=0;
+ const drafts=new Map();
+ let lastSnapshot=null;
+ const draftFor=id=>{if(!drafts.has(id))drafts.set(id,{reference:'',confirmed:false,authorized:false});return drafts.get(id);};
  const active=()=>!$('dashboard').hidden;
  const show=(s)=>{message.textContent=s;};
  const add=(parent,tag,value,cls)=>{const e=node(tag,value,cls);parent.append(e);return e;};
@@ -32,11 +35,17 @@
     .in('refund_status',['Refund Required','Processing','Refunded'])
     .order('requested_at',{ascending:false}).limit(100);
    if(error)throw error;
-   records=data||[];
+   const nextRecords=data||[];
+   const snapshot=JSON.stringify(nextRecords);
+   const changed=snapshot!==lastSnapshot;
+   records=nextRecords;
+   lastSnapshot=snapshot;
+   const liveIds=new Set(records.filter(r=>r.refund_status!=='Refunded').map(r=>r.id));
+   for(const id of drafts.keys())if(!liveIds.has(id))drafts.delete(id);
    const outstanding=records.filter(r=>r.refund_status!=='Refunded').length;
    badge.textContent=outstanding?String(outstanding):'';
    badge.hidden=!outstanding;
-   render();
+   if(changed)render();
    lastLoad=Date.now();
    show(`${outstanding} outstanding refund${outstanding===1?'':'s'} · ${records.length} records shown.`);
   }catch(e){show('Unable to load refunds: '+e.message);list.replaceChildren();badge.hidden=true;}
@@ -58,6 +67,7 @@
  }
  function detail(r,card){
   const panel=node('div',null,'ds-refund-details');panel.hidden=expanded!==r.id;card.append(panel);
+  const draft=draftFor(r.id);
   add(panel,'p','Account holder: '+(r.refund_account_name||'Unavailable'));
   add(panel,'p','GCash/Maya mobile: '+(r.refund_mobile||'Unavailable'));
   add(panel,'p','Destination: '+(r.refund_destination_type||'Unavailable'));
@@ -73,7 +83,8 @@
   if(r.refund_status==='Refund Required'&&!r.refund_destination_verified_at){
    if(r.refund_destination_type==='Different'){
     const label=node('label',null,'ds-refund-field');
-    const cb=document.createElement('input');cb.type='checkbox';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=draft.authorized;
+    label.classList.add('ds-refund-check');
     label.append(cb,node('span','I verified authorization from the original payer to refund this different account.'));
     panel.append(label);
     const b=button('Verify refund destination',()=>{
@@ -81,8 +92,8 @@
      if(!window.confirm(`Confirm original payer authorization and verify ${r.refund_method} recipient ${r.refund_account_name} (${r.refund_mobile}) for ${o.order_number}?`))return;
      action(r,'verify');
     });
-    cb.onchange=()=>{b.disabled=!cb.checked||!amountOK;};
-    b.disabled=true;panel.append(b);
+    cb.onchange=()=>{draft.authorized=cb.checked;b.disabled=!cb.checked||!amountOK;};
+    b.disabled=!cb.checked||!amountOK;panel.append(b);
    }else{
     const b=button('Verify refund destination',()=>{
      if(!window.confirm(`I independently checked the original ${r.refund_method} refund recipient ${r.refund_account_name} (${r.refund_mobile}) for ${o.order_number}. Confirm verification?`))return;
@@ -98,9 +109,9 @@
    add(panel,'p','Only mark Refunded after checking actual successful payment-provider transfer confirmation.','ds-refund-warning');
    const label=node('label',null,'ds-refund-field');
    label.append(node('span','Confirmed transfer reference'));
-   const input=document.createElement('input');input.type='text';input.maxLength=100;input.placeholder='GCash / Maya transaction reference';label.append(input);panel.append(label);
-   const confirmation=node('label',null,'ds-refund-field');
-   const cb=document.createElement('input');cb.type='checkbox';
+   const input=document.createElement('input');input.type='text';input.maxLength=100;input.placeholder='GCash / Maya transaction reference';input.value=draft.reference;input.addEventListener('input',()=>{draft.reference=input.value;});label.append(input);panel.append(label);
+   const confirmation=node('label',null,'ds-refund-field ds-refund-check');
+   const cb=document.createElement('input');cb.type='checkbox';cb.checked=draft.confirmed;cb.addEventListener('change',()=>{draft.confirmed=cb.checked;});
    confirmation.append(cb,node('span','I checked that the full refund transfer succeeded.'));
    panel.append(confirmation);
    const b=button('Mark Refunded',()=>{
@@ -140,7 +151,7 @@
  $('tabRefunds')?.addEventListener('click',()=>load(true));
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&active()&&!$('panelRefunds').hidden)load(true);});
  $('loginForm')?.addEventListener('submit',()=>setTimeout(()=>load(true),1600));
- $('signout')?.addEventListener('click',()=>{records=[];expanded=null;list.replaceChildren();badge.hidden=true;show('Sign in to view refunds.');});
+ $('signout')?.addEventListener('click',()=>{records=[];expanded=null;drafts.clear();lastSnapshot=null;list.replaceChildren();badge.hidden=true;show('Sign in to view refunds.');});
  setInterval(()=>{if(!document.hidden&&active()&&!$('panelRefunds').hidden)load();},20000);
  setTimeout(()=>{if(active())load(true);},1300);
 })();

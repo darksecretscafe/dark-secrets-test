@@ -47,6 +47,10 @@
 .ds-refund-warning{font-size:13px;color:#824620}
 .ds-refund-field{display:grid;gap:5px;margin:12px 0}
 .ds-refund-field input{max-width:420px}
+/* Keep confirmation checkbox beside its text, not centered as a full-width field. */
+.ds-refund-field.ds-refund-check{display:flex;align-items:flex-start;justify-content:flex-start;gap:9px;max-width:100%;cursor:pointer}
+.ds-refund-check input[type="checkbox"]{flex:0 0 auto;width:18px;height:18px;min-width:18px;margin:2px 0 0;padding:0;accent-color:#38251b}
+.ds-refund-check span{flex:1;min-width:0;line-height:1.45}
 .ds-refund-badge{display:inline-flex;min-width:20px;justify-content:center;margin-left:6px;padding:2px 7px;border-radius:999px;background:#a12626;color:#fff;font-size:12px}
 .ds-refund-badge[hidden]{display:none!important}
 /* Match Order History: full-width cancellation cards and simple heading. */
@@ -223,7 +227,7 @@
 <script src="admin-section-order.js"></script>
 <script src="admin-paid-guard.js?v=1"></script>
 <script src="admin-cancellation.js?v=4"></script>
-<script src="admin-refunds.js?v=1"></script>
+<script src="admin-refunds.js?v=76"></script>
 
 <script>
 if ('serviceWorker' in navigator) {
