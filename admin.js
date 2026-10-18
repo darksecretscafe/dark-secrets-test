@@ -180,7 +180,7 @@
   pending.forEach(o=>{
    const b=text('button',`${o.order_number} · Pending · ${new Date(o.created_at).toLocaleString('en-PH')}`,'pending-link');
    b.type='button';b.onclick=()=>{
-    $('statusFilter').value='Pending';render();
+    window.DS_selectAdminTab?.('Active');$('statusFilter').value='Pending';render();
     $('pendingNotifications').hidden=true;$('pendingBell').setAttribute('aria-expanded','false');
     const cards=Array.from(document.querySelectorAll('.ordercard'));
     const target=cards.find(c=>c.querySelector('h3')?.textContent===o.order_number);
