@@ -59,10 +59,10 @@
   <button type="button" class="close-btn" data-custom-close aria-label="Close">×</button>
   <span class="eyebrow">CUSTOMIZE YOUR DRINK</span>
   <h2 id="customName">Drink</h2>
-  <label class="custom-label" for="customPack">Packaging</label>
-  <select id="customPack" class="custom-select"><option value="Regular Cup">Regular Cup</option><option value="Take Away Bottle">Take Away Bottle (+₱15)</option></select>
+  <p class="packaging-hint">Set the quantity for each packaging. You can reduce either to zero.</p>
   <label id="customOatRow" class="custom-oat"><input type="checkbox" id="customOat"> Sub Oat Milk (+₱30)</label>
-  <div class="custom-quantity"><strong>Quantity</strong><div class="qty"><button type="button" id="customMinus">−</button><b id="customQty">1</b><button type="button" id="customPlus">+</button></div></div>
+  <div class="custom-quantity"><span><strong>Regular Cup</strong><small>Standard price</small></span><div class="qty"><button type="button" id="customCupMinus" aria-label="Remove one regular cup">−</button><b id="customCupQty">0</b><button type="button" id="customCupPlus" aria-label="Add one regular cup">+</button></div></div>
+  <div class="custom-quantity"><span><strong>Takeaway Bottle</strong><small>+₱15 each</small></span><div class="qty"><button type="button" id="customBottleMinus" aria-label="Remove one takeaway bottle">−</button><b id="customBottleQty">0</b><button type="button" id="customBottlePlus" aria-label="Add one takeaway bottle">+</button></div></div>
   <div class="order-total"><span>Drinks subtotal</span><strong id="customPrice">₱0</strong></div>
   <p id="customError" class="custom-error" role="alert"></p>
   <button id="customAdd" class="order-main-btn custom-add" type="button">ADD TO CART</button>

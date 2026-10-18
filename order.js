@@ -22,43 +22,64 @@ const escapeHtml = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<
 
 const customizer=document.getElementById('customizeModal');
 const customName=document.getElementById('customName');
-const customPack=document.getElementById('customPack');
 const customOat=document.getElementById('customOat');
-const customQty=document.getElementById('customQty');
 const customPrice=document.getElementById('customPrice');
-let selectedDrink=null, selectedQty=1;
+const customError=document.getElementById('customError');
+const cupQty=document.getElementById('customCupQty');
+const bottleQty=document.getElementById('customBottleQty');
+let selectedDrink=null, editingQty={cup:0,bottle:0};
+const editableKey = (packaging) => cartKey(selectedDrink.name,packaging,OAT_ELIGIBLE.has(selectedDrink.name)&&customOat.checked);
+function loadCustomizerQuantities(){
+  editingQty={cup:cart.get(editableKey('Regular Cup'))?.qty||0,bottle:cart.get(editableKey('Take Away Bottle'))?.qty||0};
+  refreshCustomizer();
+}
 function refreshCustomizer(){
-  customQty.textContent=selectedQty;
-  document.getElementById('customAdd').disabled=selectedQty===0;
-  document.getElementById('customMinus').disabled=selectedQty<=0;
-  document.getElementById('customPlus').disabled=selectedQty>=MAX_QTY;
-  const bottle=customPack.value==='Take Away Bottle';
-  customPrice.textContent=peso((selectedDrink.price+(bottle?BOTTLE_FEE:0)+(customOat.checked?OAT_FEE:0))*selectedQty);
+  const sum=editingQty.cup+editingQty.bottle;
+  cupQty.textContent=editingQty.cup;
+  bottleQty.textContent=editingQty.bottle;
+  document.getElementById('customCupMinus').disabled=editingQty.cup===0;
+  document.getElementById('customBottleMinus').disabled=editingQty.bottle===0;
+  document.getElementById('customCupPlus').disabled=sum>=MAX_QTY;
+  document.getElementById('customBottlePlus').disabled=sum>=MAX_QTY;
+  const oat=OAT_ELIGIBLE.has(selectedDrink.name)&&customOat.checked?OAT_FEE:0;
+  customPrice.textContent=peso(editingQty.cup*(selectedDrink.price+oat)+editingQty.bottle*(selectedDrink.price+BOTTLE_FEE+oat));
+  document.getElementById('customAdd').textContent='SAVE QUANTITIES';
 }
 function openCustomizer(el){
   selectedDrink={name:el.dataset.name,price:Number(el.dataset.price)};
-  selectedQty=1;customName.textContent=selectedDrink.name;
-  customPack.value='Regular Cup';customOat.checked=false;
+  document.getElementById('customName').textContent=selectedDrink.name;
+  customOat.checked=false;
   document.getElementById('customOatRow').hidden=!OAT_ELIGIBLE.has(selectedDrink.name);
-  refreshCustomizer();customizer.classList.add('open');customizer.setAttribute('aria-hidden','false');
+  customError.textContent='';
+  loadCustomizerQuantities();
+  customizer.classList.add('open');customizer.setAttribute('aria-hidden','false');
   document.body.style.overflow='hidden';
 }
 function closeCustomizer(){customizer.classList.remove('open');customizer.setAttribute('aria-hidden','true');document.body.style.overflow=modal.classList.contains('open')?'hidden':'';}
 items.forEach(el=>el.querySelector('.add-btn').addEventListener('click',()=>openCustomizer(el)));
 document.querySelectorAll('[data-custom-close]').forEach(el=>el.addEventListener('click',closeCustomizer));
-customPack.addEventListener('change',refreshCustomizer);
-customOat.addEventListener('change',refreshCustomizer);
-document.getElementById('customMinus').onclick=()=>{selectedQty=Math.max(0,selectedQty-1);refreshCustomizer()};
-document.getElementById('customPlus').onclick=()=>{selectedQty=Math.min(MAX_QTY,selectedQty+1);refreshCustomizer()};
+// Switching oat-milk selection displays the existing quantities for that exact variant.
+customOat.addEventListener('change',()=>{customError.textContent='';loadCustomizerQuantities()});
+for(const [id,kind,delta] of [['customCupMinus','cup',-1],['customCupPlus','cup',1],['customBottleMinus','bottle',-1],['customBottlePlus','bottle',1]]){
+  document.getElementById(id).onclick=()=>{
+    const next=editingQty[kind]+delta;
+    if(next<0||next>MAX_QTY||editingQty.cup+editingQty.bottle+delta>MAX_QTY)return;
+    editingQty[kind]=next;refreshCustomizer();
+  };
+}
 document.getElementById('customAdd').onclick=()=>{
-  if(!selectedDrink || selectedQty===0)return;
-  const packaging=customPack.value,oatMilk=OAT_ELIGIBLE.has(selectedDrink.name)&&customOat.checked;
-  const key=cartKey(selectedDrink.name,packaging,oatMilk);
-  const current=cart.get(key);
-  const existing=Array.from(cart.values()).filter(i=>i.name===selectedDrink.name).reduce((n,i)=>n+i.qty,0);
-  if(existing+selectedQty>MAX_QTY){document.getElementById('customError').textContent=`Maximum ${MAX_QTY} per drink. You already have ${existing}.`;return;}
-  cart.set(key,{name:selectedDrink.name,price:selectedDrink.price,packaging,oatMilk,qty:(current?.qty||0)+selectedQty});
-  document.getElementById('customError').textContent='';closeCustomizer();updateUI();
+  if(!selectedDrink)return;
+  const oatMilk=OAT_ELIGIBLE.has(selectedDrink.name)&&customOat.checked;
+  const otherQty=Array.from(cart.values()).filter(i=>i.name===selectedDrink.name&&i.oatMilk!==oatMilk).reduce((n,i)=>n+i.qty,0);
+  if(otherQty+editingQty.cup+editingQty.bottle>MAX_QTY){
+    customError.textContent=`Maximum ${MAX_QTY} per drink, including other milk options. You already have ${otherQty} in another option.`;return;
+  }
+  for(const [kind,packaging] of [['cup','Regular Cup'],['bottle','Take Away Bottle']]){
+    const key=cartKey(selectedDrink.name,packaging,oatMilk), qty=editingQty[kind];
+    if(qty===0)cart.delete(key);
+    else cart.set(key,{name:selectedDrink.name,price:selectedDrink.price,packaging,oatMilk,qty});
+  }
+  customError.textContent='';closeCustomizer();updateUI();
 };
 function updateUI(){
   const {count,total}=totals();ctaCount.textContent=count;
