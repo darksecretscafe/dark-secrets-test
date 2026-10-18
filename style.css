@@ -83,3 +83,9 @@
 .delivery-payment-notice small{display:block;font-size:11px;line-height:1.5}
 
 .packaging-hint{font-size:13px;color:#66584e;line-height:1.5;margin:14px 0}.custom-quantity span small{display:block;color:#776a60;font-size:12px;margin-top:4px}.custom-quantity+.custom-quantity{padding-top:14px}
+
+/* Clear primary action in drink customization modal */
+.customize-sheet .custom-add{display:block;width:100%;min-height:52px;margin-top:16px;padding:15px 24px;border:1px solid #38251b;border-radius:12px;background:#38251b;color:#fffaf4;font-size:12px;font-weight:800;letter-spacing:1.2px;text-align:center;cursor:pointer;transition:background .15s ease,transform .15s ease}
+.customize-sheet .custom-add:hover{background:#553a2a}
+.customize-sheet .custom-add:active{transform:translateY(1px)}
+.customize-sheet .custom-add:focus-visible{outline:3px solid #a98668;outline-offset:3px}

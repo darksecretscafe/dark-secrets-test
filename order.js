@@ -43,7 +43,7 @@ function refreshCustomizer(){
   document.getElementById('customBottlePlus').disabled=sum>=MAX_QTY;
   const oat=OAT_ELIGIBLE.has(selectedDrink.name)&&customOat.checked?OAT_FEE:0;
   customPrice.textContent=peso(editingQty.cup*(selectedDrink.price+oat)+editingQty.bottle*(selectedDrink.price+BOTTLE_FEE+oat));
-  document.getElementById('customAdd').textContent='SAVE QUANTITIES';
+  document.getElementById('customAdd').textContent=Array.from(cart.values()).some(i=>i.name===selectedDrink.name)?'UPDATE CART':'ADD TO CART';
 }
 function openCustomizer(el){
   selectedDrink={name:el.dataset.name,price:Number(el.dataset.price)};
