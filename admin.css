@@ -10,3 +10,14 @@
 .push-setup{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fffaf3;border:1px solid #cbb7a6;border-radius:13px;padding:14px;margin-top:18px}
 .push-setup[hidden]{display:none}.push-setup strong{font-size:14px}.push-setup p{font-size:12px;margin:5px 0 0}.push-setup p.error{color:#a22b23}.push-setup button{flex-shrink:0}
 @media(max-width:520px){.push-setup{align-items:stretch;flex-direction:column}.push-setup button{width:100%}}
+
+/* Step 81.12: dashboard queue and history controls */
+.stats>[role="button"]{cursor:pointer}
+.stats>[role="button"]:focus-visible{outline:3px solid #a87850;outline-offset:3px}
+.ds-history-tools{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap;margin:18px 0}
+.ds-history-filters{display:flex;gap:7px;flex-wrap:wrap}
+.ds-history-filter{background:#f9f3ea;color:#291b13;border:1px solid #cbb7a6;padding:9px 12px;font-size:12px}
+.ds-history-filter.selected{background:#291b13;color:white}
+.ds-history-tools label{flex:1;min-width:190px;max-width:300px}
+.ds-history-tools input{margin-top:6px}
+@media(max-width:520px){.ds-history-tools label{max-width:none;flex-basis:100%}}

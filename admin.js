@@ -134,6 +134,8 @@
  let refreshInFlight=false;
  let pollTimer=null;
  let pendingOrderRender=false;
+ let historyStatus="All";
+ let refundedOrderIds=new Set();
  const money=n=>'₱'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
  const text=(tag,value,cls)=>{const el=document.createElement(tag);el.textContent=value==null?'':String(value);if(cls)el.className=cls;return el;};
  function show(auth){$('login').hidden=auth;$('dashboard').hidden=!auth;$('signout').hidden=!auth;}
@@ -151,12 +153,20 @@
   if(refreshInFlight)return;
   refreshInFlight=true;
   if(!quiet)msg('Loading orders…');$('refresh').disabled=true;
-  const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,delivery_address,landmark,gps_latitude,gps_longitude,notes,payment_method,total_amount,delivery_fee,final_total,payment_status,courier,status,created_at,order_items(product_name,packaging,quantity,unit_price,subtotal)').order('created_at',{ascending:false}).limit(100);
+  const {data,error}=await db.from('orders').select('id,order_number,customer_name,customer_phone,delivery_address,landmark,gps_latitude,gps_longitude,notes,payment_method,total_amount,delivery_fee,final_total,payment_status,payment_verified_at,courier,status,created_at,order_items(product_name,packaging,quantity,unit_price,subtotal)').order('created_at',{ascending:false}).limit(100);
   $('refresh').disabled=false;refreshInFlight=false;
   if(error){if(!quiet)msg('Could not load orders: '+error.message,true);return;}
+  const previousRefundIds=[...refundedOrderIds].sort().join(",");
   const nextOrders = data || [];
+  // Refunds are recorded on cancellation requests, not as an order status.
+  // A failed optional lookup must not block ordinary order management.
+  try {
+   const {data:refundRows,error:refundError}=await db.from('order_cancellation_requests')
+    .select('order_id').eq('refund_status','Refunded').limit(1000);
+   if(!refundError) refundedOrderIds=new Set((refundRows||[]).map(r=>r.order_id));
+  } catch (_) { /* Keep the last known refund mapping. */ }
   const changed = JSON.stringify(nextOrders) !== JSON.stringify(currentOrders);
-  if (changed) {
+  if (changed || previousRefundIds!==[...refundedOrderIds].sort().join(",")) {
     currentOrders = nextOrders;
     trackNewPending(currentOrders);
     // Preserve an active delivery-fee form while the owner is typing.
@@ -204,11 +214,23 @@
    const activeOrders=currentOrders.filter(o=>!archivedStatuses.includes(o.status));
    const historyOrders=currentOrders.filter(o=>archivedStatuses.includes(o.status));
    $('orderHistoryCount').textContent=historyOrders.length;
-   const list=activeOrders.filter(o=>filter==='active'||filter==='all'||o.status===filter);
+   const progressStatuses=['Accepted','Preparing','Ready','Out for Delivery'];
+   const list=activeOrders.filter(o=>filter==='active'||filter==='all'||(filter==='progress'?progressStatuses.includes(o.status):o.status===filter))
+    .sort((a,b)=>{
+     // Paid orders enter the preparation queue when the admin verifies payment.
+     // Other active orders retain their original order timestamp.
+     const at=o=>(o.payment_status==='Paid'&&o.payment_verified_at?Date.parse(o.payment_verified_at):Date.parse(o.created_at))||0;
+     return at(a)-at(b);
+    });
   if(!list.length){root.append(text('div','No active orders match this filter.','empty'));}
   const historyRoot=$('historyOrders');historyRoot.replaceChildren();
-   if(!historyOrders.length)historyRoot.append(text('div','No archived orders in the 100 most recent orders.','empty'));
-   [...list.map(o=>({o,destination:root})),...historyOrders.map(o=>({o,destination:historyRoot}))].forEach(({o,destination})=>{
+   const query=$('historySearch').value.trim().toLocaleLowerCase();
+   const visibleHistory=historyOrders.filter(o=>
+    (historyStatus==='All'||(historyStatus==='Refunded'?refundedOrderIds.has(o.id):o.status===historyStatus))&&
+    (!query||String(o.order_number||'').toLocaleLowerCase().includes(query)||String(o.customer_name||'').toLocaleLowerCase().includes(query))
+   ).sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));
+   if(!visibleHistory.length)historyRoot.append(text('div','No orders found.','empty'));
+   [...list.map(o=>({o,destination:root})),...visibleHistory.map(o=>({o,destination:historyRoot}))].forEach(({o,destination})=>{
    const card=text('article','','ordercard'),head=text('div','','cardhead'),left=text('div');
    left.append(text('h3',o.order_number));left.append(text('div',new Date(o.created_at).toLocaleString('en-PH'),'meta'));
    head.append(left,text('span',o.status,'tag'));card.append(head);
@@ -247,6 +269,14 @@
  });
  $('signout').onclick=async()=>{stopPolling();stopAlarmLoop();activeAlarms.clear();pendingBaseline=null;await db.auth.signOut();currentOrders=[];show(false);$('pendingNotifications').hidden=true;msg('Signed out.');};
  $('refresh').onclick=()=>refresh();$('statusFilter').onchange=render;
+ $('historySearch').addEventListener('input',render);
+ document.querySelectorAll('[data-history-status]').forEach(button=>button.addEventListener('click',()=>{
+  historyStatus=button.dataset.historyStatus;
+  document.querySelectorAll('[data-history-status]').forEach(b=>{
+   const selected=b===button;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));
+  });
+  render();
+ }));
  $('orders').addEventListener('focusout', event => {
    if (!event.target.closest?.('.ds-delivery-form')) return;
    setTimeout(() => {

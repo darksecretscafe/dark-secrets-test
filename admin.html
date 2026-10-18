@@ -116,8 +116,8 @@
 
 <div class="stats">
 <div id="pendingStatCard" role="button" tabindex="0" aria-label="Show pending orders"><small>Pending</small><strong id="pendingCount">0</strong></div>
-<div><small>In progress</small><strong id="progressCount">0</strong></div>
-<div><small>Completed</small><strong id="completedCount">0</strong></div>
+<div id="progressStatCard" role="button" tabindex="0" aria-label="Show in-progress orders"><small>In progress</small><strong id="progressCount">0</strong></div>
+<div id="completedStatCard" role="button" tabindex="0" aria-label="Show completed orders"><small>Completed</small><strong id="completedCount">0</strong></div>
 </div>
 
 <section class="pending-notify" aria-label="Pending order notifications">
@@ -141,6 +141,7 @@
 <select id="statusFilter">
 <option value="active">Active orders</option>
 <option value="Pending">Pending</option>
+<option value="progress">In Progress (all stages)</option>
 <option value="Accepted">Accepted</option>
 <option value="Preparing">Preparing</option>
 <option value="Ready">Ready</option>
@@ -152,6 +153,17 @@
 <section id="panelHistory" class="ds-tab-panel" role="tabpanel" aria-labelledby="tabHistory" hidden>
 <h2>Order History (<span id="orderHistoryCount">0</span>)</h2>
 <p>Completed, Cancelled and Declined orders from the 100 most recent orders.</p>
+<div class="ds-history-tools">
+ <div class="ds-history-filters" role="group" aria-label="Order history status">
+  <button type="button" class="ds-history-filter selected" data-history-status="All" aria-pressed="true">All</button>
+  <button type="button" class="ds-history-filter" data-history-status="Completed" aria-pressed="false">Completed</button>
+  <button type="button" class="ds-history-filter" data-history-status="Declined" aria-pressed="false">Declined</button>
+  <button type="button" class="ds-history-filter" data-history-status="Cancelled" aria-pressed="false">Cancelled</button>
+  <button type="button" class="ds-history-filter" data-history-status="Refunded" aria-pressed="false">Refunded</button>
+ </div>
+ <label for="historySearch">Search by order number or customer
+ <input id="historySearch" type="search" placeholder="Search orders…" autocomplete="off"></label>
+</div>
 <div id="historyOrders" class="orders"></div>
 </section>
 <section id="panelCancellations" class="ds-tab-panel" role="tabpanel" aria-labelledby="tabCancellations" hidden>
@@ -202,6 +214,14 @@
  }
  pendingCard.addEventListener('click',showPending);
  pendingCard.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showPending();}});
+ function linkStatCard(id, tab, filterId, value){
+  const card=document.getElementById(id);
+  const go=()=>{selectTab(tab);const filter=document.getElementById(filterId);if(filter){filter.value=value;filter.dispatchEvent(new Event('change',{bubbles:true}));}if(tab==='History'){document.querySelector(`[data-history-status="${value}"]`)?.click();}};
+  card.addEventListener('click',go);
+  card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();go();}});
+ }
+ linkStatCard('progressStatCard','Active','statusFilter','progress');
+ linkStatCard('completedStatCard','History',null,'Completed');
  const historyCount=document.getElementById('orderHistoryCount');
  const cancellationCount=document.getElementById('cancellationCount');
  const historyBadge=document.getElementById('tabHistoryCount');
@@ -221,7 +241,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-config.js"></script>
 <script src="push-config.js"></script>
-<script src="admin.js?v=5"></script>
+<script src="admin.js?v=6"></script>
 <script src="admin-delivery.js"></script>
 <script src="admin-payment.js?v=1"></script>
 <script src="admin-section-order.js"></script>
