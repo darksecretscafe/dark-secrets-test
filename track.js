@@ -5,6 +5,7 @@
   const stages = document.getElementById('trackingStages');
   const payment = document.getElementById('trackingPayment');
   const cancellation = document.getElementById('trackingCancellation');
+  const refundPanel = document.getElementById('trackingRefund');
   let cancellationSubmitted = false;
   let cancellationPending = false;
   const statuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Completed'];
@@ -217,6 +218,29 @@
     form.append(submit, close, feedback);
     cancellation.append(button, form);
   }
+  function showRefund(data) {
+    if (!refundPanel) return;
+    refundPanel.replaceChildren();
+    const refund = data.refund;
+    if (!refund || !['Refund Required','Processing','Refunded'].includes(refund.status)) return;
+    refundPanel.append(el('h2', 'Refund status'));
+    const stages = ['Refund Required','Processing','Refunded'];
+    const names = ['Approved · Awaiting processing','Processing · Manual transfer in progress','Refunded · Transfer confirmed'];
+    const current = stages.indexOf(refund.status);
+    const steps = el('ol', undefined, 'ds-refund-progress');
+    stages.forEach((status, i) => {
+      const li = el('li', names[i]);
+      if (i <= current) li.className = 'done';
+      if (i === current) li.setAttribute('aria-current','step');
+      steps.append(li);
+    });
+    refundPanel.append(steps);
+    if (typeof refund.amount === 'number' && Number.isFinite(refund.amount)) refundPanel.append(el('p', 'Refund amount: ' + money(refund.amount), 'ds-refund-total'));
+    if (refund.status === 'Refunded' && refund.refunded_at) {
+      const date = new Date(refund.refunded_at);
+      if (!Number.isNaN(date.getTime())) refundPanel.append(el('p', 'Transfer confirmed: ' + date.toLocaleString('en-PH')));
+    } else refundPanel.append(el('p', 'Please check this page for updates. Contact support if you have questions.'));
+  }
   function show(data) {
     document.getElementById('trackingNumber').textContent = data.order_number;
     document.getElementById('trackingStatus').textContent = 'Status: ' + data.status;
@@ -247,7 +271,7 @@
         payment.append(el('p', 'Payment status: ' + (data.payment_status || 'Awaiting Delivery Fee'), 'tracking-payment-status'));
       }
       if (declined) {
-        if (data.payment_status === 'Paid') payment.append(el('p', 'Payment was confirmed. Contact support regarding any refund.'));
+        if (data.payment_status === 'Paid' && !data.refund) payment.append(el('p', 'Payment was confirmed. Contact support regarding any refund.'));
       } else if (ready && data.payment_status === 'Awaiting Payment' && data.status !== 'Completed') {
         addPaymentOptions(data);
       } else if (data.payment_status === 'Paid') {
@@ -260,7 +284,8 @@
       payment.hidden = false;
     } else payment.hidden = true;
     showCancellation(data);
-    finished = declined || data.status === 'Completed';
+    showRefund(data);
+    finished = data.status === 'Completed' || (declined && (!data.refund || data.refund.status === 'Refunded')); 
   }
   async function refresh() {
     if (busy || !/^[a-f0-9]{64}$/.test(token || '')) {
