@@ -52,7 +52,7 @@
         if (!verified.checked || !/^[A-Za-z0-9][A-Za-z0-9 _./-]{3,99}$/.test(ref)) {
           notify('Enter a valid transaction reference (4–100 characters) and confirm verification.', true); return;
         }
-        const confirmation = `VERIFY PAYMENT — TEST ONLY\n\nOrder: ${order.order_number}\nAmount: ${money(order.final_total)}\nMethod: ${method.value}\nReference: ${ref}\n\nHave you verified the payment in the actual ${method.value} account?\n\nMark as Paid cannot be undone using this form.`;
+        const confirmation = `VERIFY PAYMENT\n\nOrder: ${order.order_number}\nAmount: ${money(order.final_total)}\nMethod: ${method.value}\nReference: ${ref}\n\nHave you verified the payment in the actual ${method.value} account?\n\nMark as Paid cannot be undone using this form.`;
         if (!window.confirm(confirmation)) return;
         saving = true; save.disabled = true; notify('Verifying payment…');
         try {

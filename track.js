@@ -307,5 +307,5 @@
   }
   document.getElementById('refreshTracking').addEventListener('click', refresh);
   refresh();
-  setInterval(() => { if (!document.hidden && !finished) refresh(); }, 20000);
+  setInterval(() => { if (!document.hidden && !finished) refresh(); }, 10000);
 })();

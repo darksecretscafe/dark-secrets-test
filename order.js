@@ -307,7 +307,7 @@ function showSavedConfirmation(orderNumber, trackingToken){
   } else {
     document.querySelector('#orderConfirmation > p').textContent='Your order was saved. Tracking link is not available yet; please keep your order number.';
   }
-  document.getElementById('newTestOrder').textContent='CREATE ANOTHER TEST ORDER';
+  document.getElementById('newTestOrder').textContent='CREATE ANOTHER ORDER';
   document.getElementById('checkoutForm').style.display='none';
   document.getElementById('orderConfirmation').classList.add('show');
   modal.classList.add('confirmation-active');
@@ -340,7 +340,7 @@ updateUI();
 
 // Checkout label follows TEST-only configuration.
 if (window.DS_CHECKOUT?.enabled) {
-  document.querySelector('.checkout-heading span').textContent = 'TEST CHECKOUT';
-  document.querySelector('.checkout-note').textContent = 'TEST ONLY: No payment is collected at checkout. The backend must support Pending payment and delivery-fee updates before full testing.';
-  document.getElementById('placeOrder').textContent = 'PLACE TEST ORDER';
+  document.querySelector('.checkout-heading span').textContent = 'CHECKOUT';
+  document.querySelector('.checkout-note').textContent = 'No payment is collected at checkout. Delivery fee and final payment instructions will be provided after your order is reviewed.';
+  document.getElementById('placeOrder').textContent = 'PLACE ORDER';
 }
