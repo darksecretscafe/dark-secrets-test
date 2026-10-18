@@ -6,6 +6,7 @@
   const payment = document.getElementById('trackingPayment');
   const cancellation = document.getElementById('trackingCancellation');
   let cancellationSubmitted = false;
+  let cancellationPending = false;
   const statuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Completed'];
   const money = value => '₱' + Number(value).toLocaleString('en-PH', {minimumFractionDigits:2,maximumFractionDigits:2});
   let busy = false, finished = false, selectedMethod = null;
@@ -64,61 +65,156 @@
     payment.append(box);
   }
   function showCancellation(data) {
-    if (!['Pending', 'Accepted'].includes(data.status)) { cancellation.replaceChildren(); return; }
-    // Keep the open form, typed reason and pending submission intact during polling.
-    if (cancellation.dataset.orderNumber === data.order_number && cancellation.childElementCount) return;
-    cancellation.dataset.orderNumber = data.order_number;
-    cancellation.replaceChildren();
-    const title = el('h2', 'Need to cancel your order?');
-    const info = el('p', 'You can request cancellation before preparation starts. Your order is not cancelled until the team approves your request.');
-    cancellation.append(title, info);
-    if (cancellationSubmitted) {
-      cancellation.append(el('p', 'Cancellation request sent. Waiting for admin review. Refresh later for order updates.'));
+    if (!['Pending', 'Accepted'].includes(data.status)) {
+      cancellation.replaceChildren();
+      delete cancellation.dataset.orderNumber;
       return;
     }
+    // Do not destroy a form while the customer is typing during 20-second polling.
+    const formKey = data.order_number + ':' + (data.payment_status === 'Paid' ? 'paid' : 'unpaid');
+    if (cancellation.dataset.formKey === formKey && cancellation.childElementCount) return;
+    cancellation.dataset.formKey = formKey;
+    cancellation.replaceChildren();
+    cancellation.append(el('h2', 'Need to cancel your order?'));
+    cancellation.append(el('p', 'You can request cancellation before preparation starts. Your order is not cancelled until our team approves it.'));
+    if (cancellationSubmitted) {
+      cancellation.append(el('p', 'Cancellation request sent. Waiting for admin review.'));
+      return;
+    }
+    const isPaid = data.payment_status === 'Paid';
     const button = el('button', 'REQUEST CANCELLATION');
     button.type = 'button';
     const form = el('form');
     form.hidden = true;
-    const label = el('label', 'Reason for cancellation (10–500 characters)');
+    const reasonLabel = el('label', 'Reason for cancellation (10–500 characters)');
     const reason = el('textarea');
-    reason.required = true; reason.minLength = 10; reason.maxLength = 500;
-    reason.rows = 3; reason.placeholder = 'Tell us why you need to cancel';
-    label.append(reason);
+    reason.required = true;
+    reason.minLength = 10;
+    reason.maxLength = 500;
+    reason.rows = 3;
+    reason.placeholder = 'Tell us why you need to cancel';
+    reasonLabel.append(reason);
+    form.append(reasonLabel);
+
+    let destination, method, accountName, mobile;
+    if (isPaid) {
+      form.append(el('h3', 'Refund account details'));
+      form.append(el('p', 'Enter the GCash or Maya account where you want to receive the refund. Our team will verify the details before transferring any money.'));
+      const makeSelect = (title, options) => {
+        const label = el('label', title);
+        const select = el('select');
+        select.required = true;
+        for (const [value, name] of options) {
+          const option = el('option', name);
+          option.value = value;
+          select.append(option);
+        }
+        label.append(select);
+        form.append(label);
+        return select;
+      };
+      destination = makeSelect('Refund destination', [['Original', 'Original payment account'], ['Different', 'Different account']]);
+      const originalMethod = ['GCash', 'Maya'].includes(data.payment_method) ? data.payment_method : '';
+      method = makeSelect('Refund method', [['', 'Select GCash or Maya'], ['GCash', 'GCash'], ['Maya', 'Maya']]);
+      method.value = originalMethod;
+      destination.addEventListener('change', () => {
+        if (destination.value === 'Original' && originalMethod) method.value = originalMethod;
+        updateWarning();
+      });
+      method.addEventListener('change', updateWarning);
+      const nameLabel = el('label', 'Refund account holder full name');
+      accountName = el('input');
+      accountName.type = 'text';
+      accountName.required = true;
+      accountName.minLength = 2;
+      accountName.maxLength = 120;
+      accountName.autocomplete = 'name';
+      accountName.placeholder = 'Name registered to the wallet';
+      nameLabel.append(accountName);
+      form.append(nameLabel);
+      const mobileLabel = el('label', 'Refund GCash/Maya mobile number');
+      mobile = el('input');
+      mobile.type = 'tel';
+      mobile.required = true;
+      mobile.inputMode = 'numeric';
+      mobile.autocomplete = 'off';
+      mobile.maxLength = 11;
+      mobile.pattern = '09[0-9]{9}';
+      mobile.placeholder = '09XXXXXXXXX';
+      mobileLabel.append(mobile);
+      form.append(mobileLabel);
+      const warning = el('p', '', 'ds-refund-warning');
+      function updateWarning() {
+        warning.textContent = destination.value === 'Different'
+          ? 'A different refund account needs additional verification and approval from the original payer.'
+          : 'The owner will verify that this is the original payment account. Your order contact number may be different.';
+      }
+      updateWarning();
+      form.append(warning);
+      form.append(el('p', 'Never provide your GCash/Maya PIN, OTP or password. Refunds are processed manually after approval.'));
+    }
+
     const feedback = el('p');
     feedback.setAttribute('role', 'status');
-    const submit = el('button', 'SUBMIT REQUEST'); submit.type = 'submit';
-    const close = el('button', 'BACK'); close.type = 'button';
+    const submit = el('button', 'SUBMIT REQUEST');
+    submit.type = 'submit';
+    const close = el('button', 'BACK');
+    close.type = 'button';
     close.addEventListener('click', () => { form.hidden = true; button.hidden = false; });
     button.addEventListener('click', () => { button.hidden = true; form.hidden = false; reason.focus(); });
     form.addEventListener('submit', async event => {
       event.preventDefault();
+      if (cancellationPending) return;
       const value = reason.value.trim();
       if (value.length < 10 || value.length > 500) {
         feedback.textContent = 'Please enter a reason between 10 and 500 characters.';
         return;
       }
+      const body = { token, reason: value };
+      if (isPaid) {
+        const name = accountName.value.trim();
+        const phone = mobile.value.trim();
+        if (!['GCash', 'Maya'].includes(method.value) || name.length < 2 || name.length > 120 || !/^09[0-9]{9}$/.test(phone)) {
+          feedback.textContent = 'Please enter valid refund account details and an 11-digit mobile number starting with 09.';
+          return;
+        }
+        if (destination.value === 'Original' && ['GCash', 'Maya'].includes(data.payment_method) && method.value !== data.payment_method) {
+          feedback.textContent = 'For the original payment account, use the original payment method.';
+          return;
+        }
+        Object.assign(body, {
+          refund_method: method.value,
+          refund_account_name: name,
+          refund_mobile: phone,
+          refund_destination_type: destination.value,
+        });
+      }
       if (!confirm('Send your cancellation request for ' + data.order_number + '? The team must approve it.')) return;
-      submit.disabled = true; close.disabled = true;
+      cancellationPending = true;
+      submit.disabled = true;
+      close.disabled = true;
       feedback.textContent = 'Sending cancellation request…';
       try {
         const response = await fetch(window.DS_SUPABASE_URL + '/functions/v1/request-cancellation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, reason: value }),
+          body: JSON.stringify(body),
           cache: 'no-store'
         });
         const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.success === false) throw new Error(result.error || 'Could not submit request (' + response.status + ')');
+        if (!response.ok || result.ok !== true) throw new Error(result.error || 'Could not submit request (' + response.status + ')');
         cancellationSubmitted = true;
         cancellation.replaceChildren();
-        cancellation.append(el('h2', 'Need to cancel your order?'), el('p', 'Cancellation request sent. Waiting for admin review. Refresh later for order updates.'));
+        cancellation.append(el('h2', 'Cancellation request sent'), el('p', 'Waiting for admin review. If approved, our team will contact you to verify refund details before sending any refund.'));
       } catch (error) {
         feedback.textContent = 'Request failed: ' + error.message;
-        submit.disabled = false; close.disabled = false;
+        submit.disabled = false;
+        close.disabled = false;
+      } finally {
+        cancellationPending = false;
       }
     });
-    form.append(label, submit, close, feedback);
+    form.append(submit, close, feedback);
     cancellation.append(button, form);
   }
   function show(data) {
