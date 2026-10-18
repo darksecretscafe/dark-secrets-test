@@ -135,13 +135,9 @@
 <section id="cancellationManagement" class="panel" aria-label="Cancellation requests">
 <h2>Cancellation Requests</h2>
 <p>Pending requests: <strong id="cancellationCount" aria-live="polite">0</strong></p>
-<p id="cancellationMessage" role="status" aria-live="polite">Sign in to view requests.</p>
+<p id="cancellationMessage" role="status" aria-live="polite">Sign in to view pending requests.</p>
 <button type="button" id="cancellationRefresh" class="ghost">↻ Refresh requests</button>
 <div id="cancellationList"></div>
-<details id="cancellationHistory" style="margin-top:16px" hidden>
-<summary style="cursor:pointer;font-weight:600;padding:10px 0">View reviewed cancellation requests (<span id="cancellationHistoryCount">0</span>)</summary>
-<div id="cancellationHistoryList"></div>
-</details>
 </section>
 </section>
 
@@ -198,7 +194,7 @@
 <script src="admin-payment.js?v=1"></script>
 <script src="admin-section-order.js"></script>
 <script src="admin-paid-guard.js?v=1"></script>
-<script src="admin-cancellation.js?v=3"></script>
+<script src="admin-cancellation.js?v=4"></script>
 
 <script>
 if ('serviceWorker' in navigator) {

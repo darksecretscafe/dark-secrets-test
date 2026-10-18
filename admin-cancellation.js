@@ -5,9 +5,6 @@
  const list = document.getElementById('cancellationList');
  const status = document.getElementById('cancellationMessage');
  const count = document.getElementById('cancellationCount');
- const history = document.getElementById('cancellationHistory');
- const historyList = document.getElementById('cancellationHistoryList');
- const historyCount = document.getElementById('cancellationHistoryCount');
  const refreshButton = document.getElementById('cancellationRefresh');
  if (!db || !section || !list || !status || !count || !refreshButton) return;
  const el = (tag, content, className) => { const node=document.createElement(tag);node.textContent=String(content??'');if(className)node.className=className;return node; };
@@ -21,22 +18,19 @@
    if(adminError || admin!==true) throw new Error('Admin access required.');
    const {data,error}=await db.from('order_cancellation_requests')
     .select('id,order_id,reason,request_status,refund_status,requested_at,reviewed_at,orders(order_number,status,payment_status)')
-    .order('requested_at',{ascending:false}).limit(100);
+    .eq('request_status','Requested')
+     .order('requested_at',{ascending:false}).limit(100);
    if(error) throw error;
    requests=data||[];
    render();
-   status.textContent=`Showing ${requests.length} recent cancellation requests.`;
+   status.textContent=`${requests.length} pending cancellation request${requests.length===1?'':'s'}.`;
   } catch(e) {status.textContent='Unable to load requests: '+e.message+' (check admin SELECT RLS policy)';list.replaceChildren();count.textContent='—';}
   finally {busy=false;refreshButton.disabled=false;}
  }
  function render(){
-  list.replaceChildren();historyList.replaceChildren();
-  const pending=requests.filter(r=>r.request_status==='Requested');
-  const reviewed=requests.filter(r=>r.request_status!=='Requested');
-  count.textContent=pending.length;
-  historyCount.textContent=reviewed.length;
-  history.hidden=!reviewed.length;
-  if(!pending.length)list.append(el('p','No pending cancellation requests.'));
+  list.replaceChildren();
+  count.textContent=requests.length;
+  if(!requests.length)list.append(el('p','No pending cancellation requests.'));
   for(const r of requests){
    const o=r.orders||{};
    const card=el('article','','ordercard');
@@ -59,9 +53,6 @@
     }
     if(o.payment_status==='Paid')card.append(el('p','Paid order: approval requires the separate refund workflow. You may reject the request.'));
     card.append(actions);list.append(card);
-   }else{
-    card.append(el('p',`Refund: ${r.refund_status}`,'ds-cancel-detail'));
-    historyList.append(card);
    }
   }
  }
