@@ -23,6 +23,13 @@
 .ds-admin-tabs .ds-tab:focus-visible{outline:3px solid #a87850;outline-offset:2px}
 .ds-tab-panel[hidden]{display:none!important}
 .ds-tab-panel{min-width:0}
+/* Keep legacy notification elements for admin.js, but remove the duplicate bar. */
+.pending-notify{display:none!important}
+.stats>div:first-child{cursor:pointer;transition:filter .15s ease,transform .15s ease}
+.stats>div:first-child:hover{filter:brightness(1.14)}
+.stats>div:first-child:focus-visible{outline:3px solid #a87850;outline-offset:3px}
+.ds-cancellation-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;padding:2px 7px;margin-left:6px;border-radius:999px;background:#a12626;color:white;font-size:12px;font-weight:800}
+.ds-cancellation-badge[hidden]{display:none!important}
 @media(max-width:540px){.ds-admin-tabs{gap:6px}.ds-admin-tabs .ds-tab{flex:1 1 100px;padding:12px 7px;font-size:12px}}
 </style>
 </head>
@@ -75,7 +82,7 @@
 </div>
 
 <div class="stats">
-<div><small>Pending</small><strong id="pendingCount">0</strong></div>
+<div id="pendingStatCard" role="button" tabindex="0" aria-label="Show pending orders"><small>Pending</small><strong id="pendingCount">0</strong></div>
 <div><small>In progress</small><strong id="progressCount">0</strong></div>
 <div><small>Completed</small><strong id="completedCount">0</strong></div>
 </div>
@@ -92,7 +99,7 @@
 <nav class="ds-admin-tabs" aria-label="Dashboard sections" role="tablist">
 <button type="button" id="tabActive" class="ds-tab active" role="tab" aria-selected="true" aria-controls="panelActive">Active Orders</button>
 <button type="button" id="tabHistory" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelHistory">Order History <span id="tabHistoryCount">(0)</span></button>
-<button type="button" id="tabCancellations" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelCancellations">Cancellations <span id="tabCancellationCount"></span></button>
+<button type="button" id="tabCancellations" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelCancellations">Cancellations <span id="tabCancellationCount" class="ds-cancellation-badge" aria-label="Pending cancellation requests" hidden></span></button>
 </nav>
 <section id="panelActive" class="ds-tab-panel" role="tabpanel" aria-labelledby="tabActive">
 <div class="filters">
@@ -146,6 +153,15 @@
  }
  window.DS_selectAdminTab=selectTab;
  names.forEach(name=>document.getElementById('tab'+name).addEventListener('click',()=>selectTab(name)));
+ const pendingCard=document.getElementById('pendingStatCard');
+ function showPending(){
+  selectTab('Active');
+  const filter=document.getElementById('statusFilter');
+  filter.value='Pending';
+  filter.dispatchEvent(new Event('change',{bubbles:true}));
+ }
+ pendingCard.addEventListener('click',showPending);
+ pendingCard.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showPending();}});
  const historyCount=document.getElementById('orderHistoryCount');
  const cancellationCount=document.getElementById('cancellationCount');
  const historyBadge=document.getElementById('tabHistoryCount');
@@ -153,7 +169,9 @@
  const sync=()=>{
   historyBadge.textContent='('+historyCount.textContent+')';
   const n=Number(cancellationCount.textContent)||0;
-  cancellationBadge.textContent=n?'('+n+' pending)':'';
+  cancellationBadge.textContent=n?String(n):'';
+  cancellationBadge.hidden=n===0;
+  document.getElementById('tabCancellations').setAttribute('aria-label',n?`Cancellations: ${n} pending requests`:'Cancellations: no pending requests');
  };
  new MutationObserver(sync).observe(historyCount,{childList:true,characterData:true,subtree:true});
  new MutationObserver(sync).observe(cancellationCount,{childList:true,characterData:true,subtree:true});
