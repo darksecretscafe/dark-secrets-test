@@ -4,6 +4,8 @@
   const msg = document.getElementById('trackingMessage');
   const stages = document.getElementById('trackingStages');
   const payment = document.getElementById('trackingPayment');
+  const cancellation = document.getElementById('trackingCancellation');
+  let cancellationSubmitted = false;
   const statuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Completed'];
   const money = value => '₱' + Number(value).toLocaleString('en-PH', {minimumFractionDigits:2,maximumFractionDigits:2});
   let busy = false, finished = false, selectedMethod = null;
@@ -61,6 +63,60 @@
     showMethod();
     payment.append(box);
   }
+  function showCancellation(data) {
+    cancellation.replaceChildren();
+    if (!['Pending', 'Accepted'].includes(data.status)) return;
+    const title = el('h2', 'Need to cancel your order?');
+    const info = el('p', 'You can request cancellation before preparation starts. Your order is not cancelled until the team approves your request.');
+    cancellation.append(title, info);
+    if (cancellationSubmitted) {
+      cancellation.append(el('p', 'Cancellation request sent. Waiting for admin review. Refresh later for order updates.'));
+      return;
+    }
+    const button = el('button', 'REQUEST CANCELLATION');
+    button.type = 'button';
+    const form = el('form');
+    form.hidden = true;
+    const label = el('label', 'Reason for cancellation (10–500 characters)');
+    const reason = el('textarea');
+    reason.required = true; reason.minLength = 10; reason.maxLength = 500;
+    reason.rows = 3; reason.placeholder = 'Tell us why you need to cancel';
+    label.append(reason);
+    const feedback = el('p');
+    feedback.setAttribute('role', 'status');
+    const submit = el('button', 'SUBMIT REQUEST'); submit.type = 'submit';
+    const close = el('button', 'BACK'); close.type = 'button';
+    close.addEventListener('click', () => { form.hidden = true; button.hidden = false; });
+    button.addEventListener('click', () => { button.hidden = true; form.hidden = false; reason.focus(); });
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const value = reason.value.trim();
+      if (value.length < 10 || value.length > 500) {
+        feedback.textContent = 'Please enter a reason between 10 and 500 characters.';
+        return;
+      }
+      if (!confirm('Send your cancellation request for ' + data.order_number + '? The team must approve it.')) return;
+      submit.disabled = true; close.disabled = true;
+      feedback.textContent = 'Sending cancellation request…';
+      try {
+        const response = await fetch(window.DS_SUPABASE_URL + '/functions/v1/request-cancellation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, reason: value }),
+          cache: 'no-store'
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.success === false) throw new Error(result.error || 'Could not submit request (' + response.status + ')');
+        cancellationSubmitted = true;
+        showCancellation(data);
+      } catch (error) {
+        feedback.textContent = 'Request failed: ' + error.message;
+        submit.disabled = false; close.disabled = false;
+      }
+    });
+    form.append(label, submit, close, feedback);
+    cancellation.append(button, form);
+  }
   function show(data) {
     document.getElementById('trackingNumber').textContent = data.order_number;
     document.getElementById('trackingStatus').textContent = 'Status: ' + data.status;
@@ -97,6 +153,7 @@
       }
       payment.hidden = false;
     } else payment.hidden = true;
+    showCancellation(data);
     finished = declined || data.status === 'Completed';
   }
   async function refresh() {
