@@ -5,6 +5,9 @@
  const list = document.getElementById('cancellationList');
  const status = document.getElementById('cancellationMessage');
  const count = document.getElementById('cancellationCount');
+ const history = document.getElementById('cancellationHistory');
+ const historyList = document.getElementById('cancellationHistoryList');
+ const historyCount = document.getElementById('cancellationHistoryCount');
  const refreshButton = document.getElementById('cancellationRefresh');
  if (!db || !section || !list || !status || !count || !refreshButton) return;
  const el = (tag, content, className) => { const node=document.createElement(tag);node.textContent=String(content??'');if(className)node.className=className;return node; };
@@ -27,8 +30,13 @@
   finally {busy=false;refreshButton.disabled=false;}
  }
  function render(){
-  list.replaceChildren();count.textContent=requests.filter(r=>r.request_status==='Requested').length;
-  if(!requests.length){list.append(el('p','No cancellation requests yet.'));return;}
+  list.replaceChildren();historyList.replaceChildren();
+  const pending=requests.filter(r=>r.request_status==='Requested');
+  const reviewed=requests.filter(r=>r.request_status!=='Requested');
+  count.textContent=pending.length;
+  historyCount.textContent=reviewed.length;
+  history.hidden=!reviewed.length;
+  if(!pending.length)list.append(el('p','No pending cancellation requests.'));
   for(const r of requests){
    const o=r.orders||{};
    const card=el('article','', 'ordercard');card.style.marginTop='12px';
@@ -40,14 +48,13 @@
     const actions=el('div','','actions');
     for(const decision of ['Approved','Rejected']){
      const button=el('button',decision==='Approved'?'Approve cancellation':'Reject request',decision==='Rejected'?'secondary':'');
-     button.type='button';
-     button.onclick=()=>review(r,decision,button);
-     actions.append(button);
+     button.type='button';button.onclick=()=>review(r,decision,button);actions.append(button);
     }
     if(o.payment_status==='Paid')card.append(el('p','Paid order: approval requires the separate refund workflow. You may reject the request.'));
-    card.append(actions);
-   } else card.append(el('p',`Refund: ${r.refund_status}`));
-   list.append(card);
+    card.append(actions);list.append(card);
+   }else{
+    card.append(el('p',`Refund: ${r.refund_status}`));historyList.append(card);
+   }
   }
  }
  async function review(r,decision,button){

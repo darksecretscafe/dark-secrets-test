@@ -80,28 +80,38 @@
 </div>
 </section>
 
+<section id="cancellationManagement" class="panel" aria-label="Cancellation requests" style="margin:18px 0">
+<h2>Pending Cancellation Requests: <span id="cancellationCount" aria-live="polite">0</span></h2>
+<p id="cancellationMessage" role="status" aria-live="polite">Sign in to view requests.</p>
+<button type="button" id="cancellationRefresh" class="ghost">↻ Refresh requests</button>
+<div id="cancellationList"></div>
+<details id="cancellationHistory" style="margin-top:16px" hidden>
+<summary style="cursor:pointer;font-weight:600;padding:10px 0">View reviewed cancellation requests (<span id="cancellationHistoryCount">0</span>)</summary>
+<div id="cancellationHistoryList"></div>
+</details>
+</section>
+<details id="orderManagement" style="margin:18px 0">
+<summary style="cursor:pointer;font-weight:700;padding:16px;border:1px solid #d8c7b7;border-radius:12px;background:#f8f2ea">Show Orders / Manage Orders</summary>
+<div style="padding-top:14px">
 <div class="filters">
 <label for="statusFilter">Show</label>
 <select id="statusFilter">
-<option value="all">All orders</option>
+<option value="active">Active orders</option>
 <option value="Pending">Pending</option>
 <option value="Accepted">Accepted</option>
 <option value="Preparing">Preparing</option>
 <option value="Ready">Ready</option>
 <option value="Out for Delivery">Out for Delivery</option>
-<option value="Completed">Completed</option>
-<option value="Declined">Declined</option>
-<option value="Cancelled">Cancelled</option>
 </select>
 </div>
 
-<section id="cancellationManagement" class="panel" aria-label="Cancellation requests" style="margin:20px 0">
-<h2>Cancellation Requests <span id="cancellationCount" aria-live="polite">0</span></h2>
-<p id="cancellationMessage" role="status" aria-live="polite">Sign in to view requests.</p>
-<button type="button" id="cancellationRefresh" class="ghost">↻ Refresh requests</button>
-<div id="cancellationList"></div>
-</section>
 <div id="orders" class="orders"></div>
+<details id="orderHistory" style="margin-top:18px">
+<summary style="cursor:pointer;font-weight:600;padding:12px 0">Order History (<span id="orderHistoryCount">0</span>) — Completed / Cancelled / Declined</summary>
+<div id="historyOrders" class="orders"></div>
+</details>
+</div>
+</details>
 </section>
 
 <p id="message" role="status" aria-live="polite"></p>
@@ -111,12 +121,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-config.js"></script>
 <script src="push-config.js"></script>
-<script src="admin.js"></script>
+<script src="admin.js?v=4"></script>
 <script src="admin-delivery.js"></script>
 <script src="admin-payment.js?v=1"></script>
 <script src="admin-section-order.js"></script>
 <script src="admin-paid-guard.js?v=1"></script>
-<script src="admin-cancellation.js?v=1"></script>
+<script src="admin-cancellation.js?v=2"></script>
 
 <script>
 if ('serviceWorker' in navigator) {

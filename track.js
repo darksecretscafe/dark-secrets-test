@@ -142,11 +142,17 @@
       if (ready) {
         payment.append(line((data.courier || 'Courier') + ' fee', money(data.delivery_fee)));
         payment.append(line('Final amount to pay', money(data.final_total), true));
-      } else {
+      } else if (!declined) {
         payment.append(el('p', 'Delivery fee is being calculated. Please wait for the final payment amount.'));
       }
-      payment.append(el('p', 'Payment status: ' + (data.payment_status || 'Awaiting Delivery Fee'), 'tracking-payment-status'));
-      if (ready && data.payment_status === 'Awaiting Payment' && !declined && data.status !== 'Completed') {
+      if (declined && data.payment_status !== 'Paid') {
+        payment.append(el('p', 'Order cancelled or declined. No payment required.', 'tracking-payment-status'));
+      } else {
+        payment.append(el('p', 'Payment status: ' + (data.payment_status || 'Awaiting Delivery Fee'), 'tracking-payment-status'));
+      }
+      if (declined) {
+        if (data.payment_status === 'Paid') payment.append(el('p', 'Payment was confirmed. Contact support regarding any refund.'));
+      } else if (ready && data.payment_status === 'Awaiting Payment' && data.status !== 'Completed') {
         addPaymentOptions(data);
       } else if (data.payment_status === 'Paid') {
         payment.append(el('p', 'Payment confirmed. Thank you!'));

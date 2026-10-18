@@ -200,9 +200,15 @@
   $('progressCount').textContent=currentOrders.filter(o=>['Accepted','Preparing','Ready','Out for Delivery'].includes(o.status)).length;
   $('completedCount').textContent=currentOrders.filter(o=>o.status==='Completed').length;
   const root=$('orders');root.replaceChildren();const filter=$('statusFilter').value;
-  const list=currentOrders.filter(o=>filter==='all'||o.status===filter);
-  if(!list.length){root.append(text('div','No orders found. Orders are not being submitted by the website yet.','empty'));return;}
-  list.forEach(o=>{
+  const archivedStatuses=['Completed','Cancelled','Declined'];
+   const activeOrders=currentOrders.filter(o=>!archivedStatuses.includes(o.status));
+   const historyOrders=currentOrders.filter(o=>archivedStatuses.includes(o.status));
+   $('orderHistoryCount').textContent=historyOrders.length;
+   const list=activeOrders.filter(o=>filter==='active'||filter==='all'||o.status===filter);
+  if(!list.length){root.append(text('div','No active orders match this filter.','empty'));}
+  const historyRoot=$('historyOrders');historyRoot.replaceChildren();
+   if(!historyOrders.length)historyRoot.append(text('div','No archived orders in the 100 most recent orders.','empty'));
+   [...list.map(o=>({o,destination:root})),...historyOrders.map(o=>({o,destination:historyRoot}))].forEach(({o,destination})=>{
    const card=text('article','','ordercard'),head=text('div','','cardhead'),left=text('div');
    left.append(text('h3',o.order_number));left.append(text('div',new Date(o.created_at).toLocaleString('en-PH'),'meta'));
    head.append(left,text('span',o.status,'tag'));card.append(head);
@@ -219,7 +225,7 @@
    const transitions={Pending:[['Accept','Accepted',''],['Decline','Declined','reject']],Accepted:[['Start preparing','Preparing','secondary']],Preparing:[['Mark ready','Ready','secondary']],Ready:[['Out for delivery','Out for Delivery','secondary']], 'Out for Delivery':[['Complete','Completed','']]};
    (transitions[o.status]||[]).forEach(([label,next,cls])=>{
     const b=text('button',label,cls);b.type='button';b.onclick=()=>changeStatus(o,next,b);actions.append(b);
-   });card.append(actions);root.append(card);
+   });card.append(actions);destination.append(card);
   });
  }
  async function changeStatus(order,next,button){
