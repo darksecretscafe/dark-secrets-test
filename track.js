@@ -64,8 +64,11 @@
     payment.append(box);
   }
   function showCancellation(data) {
+    if (!['Pending', 'Accepted'].includes(data.status)) { cancellation.replaceChildren(); return; }
+    // Keep the open form, typed reason and pending submission intact during polling.
+    if (cancellation.dataset.orderNumber === data.order_number && cancellation.childElementCount) return;
+    cancellation.dataset.orderNumber = data.order_number;
     cancellation.replaceChildren();
-    if (!['Pending', 'Accepted'].includes(data.status)) return;
     const title = el('h2', 'Need to cancel your order?');
     const info = el('p', 'You can request cancellation before preparation starts. Your order is not cancelled until the team approves your request.');
     cancellation.append(title, info);
@@ -108,7 +111,8 @@
         const result = await response.json().catch(() => ({}));
         if (!response.ok || result.success === false) throw new Error(result.error || 'Could not submit request (' + response.status + ')');
         cancellationSubmitted = true;
-        showCancellation(data);
+        cancellation.replaceChildren();
+        cancellation.append(el('h2', 'Need to cancel your order?'), el('p', 'Cancellation request sent. Waiting for admin review. Refresh later for order updates.'));
       } catch (error) {
         feedback.textContent = 'Request failed: ' + error.message;
         submit.disabled = false; close.disabled = false;
