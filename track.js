@@ -279,10 +279,8 @@
     }
     msg.textContent = declined ? 'This order was cancelled or declined. Contact support for assistance.' : idx === -1 ? 'Order status is being updated.' : 'Latest status shown below.';
     const verified = data.payment_status === 'Paid' ? pht(data.payment_verified_at) : '';
-    const updated = pht(data.updated_at);
     document.getElementById('trackingUpdated').textContent =
-      (verified ? 'Payment verified: ' + verified + ' | ' : '') +
-      (updated ? 'Last order update: ' + updated : '');
+      verified ? 'Payment verified: ' + verified : '';
     payment.replaceChildren();
     if (typeof data.total_amount === 'number' && Number.isFinite(data.total_amount)) {
       payment.append(el('h2', 'Delivery & payment'));
@@ -297,14 +295,21 @@
       if (declined && data.payment_status !== 'Paid') {
         payment.append(el('p', 'Order cancelled or declined. No payment required.', 'tracking-payment-status'));
       } else {
-        payment.append(el('p', 'Payment status: ' + (data.payment_status || 'Awaiting Delivery Fee'), 'tracking-payment-status'));
+        const paymentStatus = el('p', 'Payment status: ' + (data.payment_status || 'Awaiting Delivery Fee'), 'tracking-payment-status');
+        paymentStatus.style.fontSize = '16px';
+        paymentStatus.style.fontWeight = '700';
+        paymentStatus.style.lineHeight = '1.5';
+        payment.append(paymentStatus);
       }
       if (declined) {
         if (data.payment_status === 'Paid' && !data.refund) payment.append(el('p', 'Payment was confirmed. Contact support regarding any refund.'));
       } else if (ready && data.payment_status === 'Awaiting Payment' && data.status !== 'Completed') {
         addPaymentOptions(data);
       } else if (data.payment_status === 'Paid') {
-        payment.append(el('p', 'Payment confirmed. Thank you!'));
+        const paymentConfirmed = el('p', 'Payment confirmed. Thank you!');
+        paymentConfirmed.style.fontSize = '15px';
+        paymentConfirmed.style.lineHeight = '1.5';
+        payment.append(paymentConfirmed);
       } else if (data.payment_status === 'Payment Submitted') {
         payment.append(el('p', 'Payment proof is awaiting verification.'));
       } else if (!ready) {
