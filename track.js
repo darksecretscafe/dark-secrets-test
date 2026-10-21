@@ -241,6 +241,23 @@
       if (!Number.isNaN(date.getTime())) refundPanel.append(el('p', 'Transfer confirmed: ' + date.toLocaleString('en-PH')));
     } else refundPanel.append(el('p', 'Please check this page for updates. Contact support if you have questions.'));
   }
+  // All timeline timestamps are displayed in Philippine Time.
+  function pht(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('en-PH', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    }).format(date) + ' PHT';
+  }
+  function statusTime(data, status) {
+    if (status === 'Pending') return pht(data.created_at);
+    const history = Array.isArray(data.status_history) ? data.status_history : [];
+    const entry = history.find(item => item && item.status === status && item.changed_at);
+    return entry ? pht(entry.changed_at) : '';
+  }
   function show(data) {
     document.getElementById('trackingNumber').textContent = data.order_number;
     document.getElementById('trackingStatus').textContent = 'Status: ' + data.status;
@@ -250,10 +267,22 @@
     for (let i = 0; i < statuses.length; i++) {
       const li = el('li', statuses[i]);
       if (!declined && i <= idx) li.className = 'done';
+      const time = statusTime(data, statuses[i]);
+      if (time) li.append(el('small', ' · ' + time, 'ds-tracking-time'));
+      stages.append(li);
+    }
+    if (declined) {
+      const time = statusTime(data, data.status);
+      const li = el('li', data.status + (time ? ' · ' + time : ''));
+      li.className = 'done';
       stages.append(li);
     }
     msg.textContent = declined ? 'This order was cancelled or declined. Contact support for assistance.' : idx === -1 ? 'Order status is being updated.' : 'Latest status shown below.';
-    document.getElementById('trackingUpdated').textContent = data.updated_at ? 'Last updated: ' + new Date(data.updated_at).toLocaleString() : '';
+    const verified = data.payment_status === 'Paid' ? pht(data.payment_verified_at) : '';
+    const updated = pht(data.updated_at);
+    document.getElementById('trackingUpdated').textContent =
+      (verified ? 'Payment verified: ' + verified + ' | ' : '') +
+      (updated ? 'Last order update: ' + updated : '');
     payment.replaceChildren();
     if (typeof data.total_amount === 'number' && Number.isFinite(data.total_amount)) {
       payment.append(el('h2', 'Delivery & payment'));
