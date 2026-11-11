@@ -196,7 +196,7 @@ useLocationBtn.onclick=()=>{
 
 let submitBusy = false;
 let pendingOrder = null;
-const CHECKOUT_ATTEMPT_KEY = 'dsc-test-checkout-attempt-v2';
+const CHECKOUT_ATTEMPT_KEY = 'dsc-production-checkout-attempt-v1';
 
 function randomCheckoutCredential() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
