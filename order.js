@@ -4,7 +4,8 @@ const BOTTLE_FEE = 15;
 const OAT_FEE = 30;
 const OAT_ELIGIBLE = new Set(['Cafe Latte','Spanish Latte','White Chocolate Mocha','Caramel Macchiato','Matcha Latte','Hot Chocolate']);
 const peso = n => `₱${n}`;
-const items = [...document.querySelectorAll('.menu-item')];
+let items = [];
+const DYNAMIC_MENU_PREVIEW = true; // TEST only: do not submit orders to the LIVE checkout.
 const ctaCount = document.getElementById('ctaCount');
 const ctaSummary = document.getElementById('ctaSummary');
 const modal = document.getElementById('orderModal');
@@ -56,7 +57,11 @@ function openCustomizer(el){
   document.body.style.overflow='hidden';
 }
 function closeCustomizer(){customizer.classList.remove('open');customizer.setAttribute('aria-hidden','true');document.body.style.overflow=modal.classList.contains('open')?'hidden':'';}
-items.forEach(el=>el.querySelector('.add-btn').addEventListener('click',()=>openCustomizer(el)));
+function bindMenuItems() {
+  items = [...document.querySelectorAll('.menu-item')];
+  items.forEach(el => el.querySelector('.add-btn').addEventListener('click', () => openCustomizer(el)));
+  updateUI();
+}
 document.querySelectorAll('[data-custom-close]').forEach(el=>el.addEventListener('click',closeCustomizer));
 // Switching oat-milk selection displays the existing quantities for that exact variant.
 customOat.addEventListener('change',()=>{customError.textContent='';loadCustomizerQuantities()});
@@ -109,7 +114,7 @@ function renderOrder(){
   });
   const {total,count}=totals();modalTotal.textContent=total;
   document.getElementById('messengerOrder').disabled=count===0;
-  document.getElementById('placeOrder').disabled=!(window.DS_CHECKOUT?.enabled&&count>0);
+  document.getElementById('placeOrder').disabled=DYNAMIC_MENU_PREVIEW || !(window.DS_CHECKOUT?.enabled&&count>0);
   if(!count)lines.innerHTML='<p style="text-align:center;color:#776a60;padding:18px 0">Your order is empty.</p>';
 }
 function openModal(){
@@ -253,7 +258,7 @@ function initTurnstile(){
 initTurnstile();
 document.getElementById('placeOrder').onclick=async()=>{
  const cfg=window.DS_CHECKOUT;
- if(!cfg?.enabled || submitBusy || !totals().count || !validateCheckout())return;
+ if(DYNAMIC_MENU_PREVIEW || !cfg?.enabled || submitBusy || !totals().count || !validateCheckout())return;
  const status=document.getElementById('submitStatus');
  const token=getTurnstileToken();
  if(!token){status.textContent='Please complete the verification before placing your order.';return;}
@@ -298,7 +303,7 @@ updateUI();
  }catch(error){
   status.textContent='Order was not confirmed. '+(error?.message||'Please try again.');
  }finally{
-  submitBusy=false;btn.disabled=!(cfg?.enabled && totals().count);
+  submitBusy=false;btn.disabled=DYNAMIC_MENU_PREVIEW || !(cfg?.enabled && totals().count);
   if(window.turnstile && turnstileWidgetId!==null)window.turnstile.reset(turnstileWidgetId);
  }
 };
@@ -361,8 +366,79 @@ document.getElementById('messengerOrder').onclick=async()=>{
 updateUI();
 
 // Checkout label follows TEST-only configuration.
-if (window.DS_CHECKOUT?.enabled) {
+if (window.DS_CHECKOUT?.enabled && !DYNAMIC_MENU_PREVIEW) {
   document.querySelector('.checkout-heading span').textContent = 'CHECKOUT';
   document.querySelector('.checkout-note').textContent = 'No payment is collected at checkout. Delivery fee and final payment instructions will be provided after your order is reviewed.';
   document.getElementById('placeOrder').textContent = 'PLACE ORDER';
 }
+
+
+// TEST-only dynamic menu. Products are loaded with the public publishable key,
+// and PostgreSQL RLS limits anonymous reads to active products.
+async function loadDynamicMenu() {
+  const root = document.getElementById('dynamicMenu');
+  if (!root) return;
+  const url = window.DS_SUPABASE_URL;
+  const key = window.DS_SUPABASE_KEY;
+  if (!url || !key) {
+    root.textContent = 'Menu is temporarily unavailable.';
+    return;
+  }
+  try {
+    const response = await fetch(`${url}/rest/v1/products?select=id,name,price,category&is_active=eq.true&order=name.asc`, {
+      headers: { apikey: key },
+      cache: 'no-store'
+    });
+    if (!response.ok) throw new Error(`Menu request failed (${response.status})`);
+    const products = await response.json();
+    if (!Array.isArray(products)) throw new Error('Invalid menu response');
+    root.replaceChildren();
+    const categories = ['Coffee', 'Non-Coffee', ...new Set(products.map(p => p.category).filter(c => c !== 'Coffee' && c !== 'Non-Coffee'))];
+    for (const category of categories) {
+      const groupProducts = products.filter(p => p.category === category && typeof p.name === 'string' && p.name.trim() && Number.isFinite(Number(p.price)) && Number(p.price) > 0);
+      if (!groupProducts.length) continue;
+      const group = document.createElement('div');
+      group.className = 'group';
+      const heading = document.createElement('h2');
+      heading.textContent = `${category === 'Coffee' ? '☕ ' : category === 'Non-Coffee' ? '◒ ' : ''}${category}`;
+      group.appendChild(heading);
+      for (const product of groupProducts) {
+        const item = document.createElement('div');
+        item.className = 'menu-item';
+        item.dataset.name = product.name;
+        item.dataset.price = String(Number(product.price));
+        item.dataset.productId = product.id;
+        item.dataset.drink = 'true';
+        const name = document.createElement('span');
+        name.textContent = product.name;
+        const price = document.createElement('b');
+        price.textContent = peso(Number(product.price));
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'add-btn';
+        button.textContent = '+ ADD';
+        item.append(name, price, button);
+        group.appendChild(item);
+      }
+      if (category === 'Coffee') {
+        const note = document.createElement('small');
+        note.textContent = 'All of our coffee drinks are standard double-shot.';
+        group.appendChild(note);
+      }
+      root.appendChild(group);
+    }
+    if (!root.children.length) root.textContent = 'No drinks are currently available.';
+    bindMenuItems();
+  } catch (error) {
+    console.error('Could not load products:', error);
+    root.textContent = 'Menu is temporarily unavailable. Please try refreshing the page.';
+  }
+}
+
+// The TEST preview supports building a cart and copying an order to Messenger,
+// but prevents server checkout until dynamic server-side validation is deployed.
+document.getElementById('placeOrder').disabled = true;
+document.getElementById('placeOrder').textContent = 'ONLINE CHECKOUT — COMING SOON';
+document.querySelector('.checkout-heading span').textContent = 'MENU PREVIEW';
+document.querySelector('.checkout-note').textContent = 'Online checkout is not enabled for the dynamic menu yet. You can copy your order and contact us through Messenger.';
+loadDynamicMenu();
