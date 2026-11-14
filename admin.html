@@ -134,6 +134,15 @@
 <button type="button" id="tabHistory" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelHistory">Order History <span id="tabHistoryCount">(0)</span></button>
 <button type="button" id="tabCancellations" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelCancellations">Cancellations <span id="tabCancellationCount" class="ds-cancellation-badge" aria-label="Pending cancellation requests" hidden></span></button>
 <button type="button" id="tabRefunds" class="ds-tab" role="tab" aria-selected="false" aria-controls="panelRefunds">Refunds <span id="tabRefundCount" class="ds-refund-badge" hidden></span></button>
+ <button
+  type="button"
+  id="tabProducts"
+  class="ds-tab"
+  role="tab"
+  aria-selected="false"
+  aria-controls="panelProducts">
+  Products
+</button>
 </nav>
 <section id="panelActive" class="ds-tab-panel" role="tabpanel" aria-labelledby="tabActive">
 <div class="filters">
@@ -183,7 +192,17 @@
 </div>
 <p id="refundMessage" role="status" aria-live="polite">Sign in to view refunds.</p>
 <div id="refundList" class="ds-refund-list"></div>
+</section> <section
+  id="panelProducts"
+  class="ds-tab-panel"
+  role="tabpanel"
+  aria-labelledby="tabProducts"
+  hidden>
+  <h2>Product Management</h2>
+  <p>Manage your coffee shop menu.</p>
+  <div id="productsList"></div>
 </section>
+ 
 
 <p id="message" role="status" aria-live="polite"></p>
 <footer>Admin access only</footer>
@@ -191,7 +210,7 @@
 
 <script>
 (() => {
- const names=['Active','History','Cancellations','Refunds'];
+ const names=['Active','History','Cancellations','Refunds','Products'];
  function selectTab(name){
   if(!names.includes(name))return;
   for(const item of names){
