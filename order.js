@@ -2,7 +2,7 @@ const cart = new Map();
 const MAX_QTY = 15;
 const BOTTLE_FEE = 15;
 const OAT_FEE = 30;
-const OAT_ELIGIBLE = new Set(['Cafe Latte','Spanish Latte','White Chocolate Mocha','Caramel Macchiato','Matcha Latte','Hot Chocolate']);
+// Oat milk eligibility is loaded per product from Supabase (no hardcoded drink list).
 const peso = n => `₱${n}`;
 let items = [];
 const DYNAMIC_MENU_PREVIEW = true; // TEST only: do not submit orders to the LIVE checkout.
@@ -29,7 +29,7 @@ const customError=document.getElementById('customError');
 const cupQty=document.getElementById('customCupQty');
 const bottleQty=document.getElementById('customBottleQty');
 let selectedDrink=null, editingQty={cup:0,bottle:0};
-const editableKey = (packaging) => cartKey(selectedDrink.name,packaging,OAT_ELIGIBLE.has(selectedDrink.name)&&customOat.checked);
+const editableKey = (packaging) => cartKey(selectedDrink.name,packaging,selectedDrink.oatEligible&&customOat.checked);
 function loadCustomizerQuantities(){
   editingQty={cup:cart.get(editableKey('Regular Cup'))?.qty||0,bottle:cart.get(editableKey('Take Away Bottle'))?.qty||0};
   refreshCustomizer();
@@ -42,15 +42,15 @@ function refreshCustomizer(){
   document.getElementById('customBottleMinus').disabled=editingQty.bottle===0;
   document.getElementById('customCupPlus').disabled=sum>=MAX_QTY;
   document.getElementById('customBottlePlus').disabled=sum>=MAX_QTY;
-  const oat=OAT_ELIGIBLE.has(selectedDrink.name)&&customOat.checked?OAT_FEE:0;
+  const oat=selectedDrink.oatEligible&&customOat.checked?OAT_FEE:0;
   customPrice.textContent=peso(editingQty.cup*(selectedDrink.price+oat)+editingQty.bottle*(selectedDrink.price+BOTTLE_FEE+oat));
   document.getElementById('customAdd').textContent=Array.from(cart.values()).some(i=>i.name===selectedDrink.name)?'UPDATE CART':'ADD TO CART';
 }
 function openCustomizer(el){
-  selectedDrink={name:el.dataset.name,price:Number(el.dataset.price)};
+  selectedDrink={name:el.dataset.name,price:Number(el.dataset.price),oatEligible:el.dataset.oatEligible==='true'};
   document.getElementById('customName').textContent=selectedDrink.name;
   customOat.checked=false;
-  document.getElementById('customOatRow').hidden=!OAT_ELIGIBLE.has(selectedDrink.name);
+  document.getElementById('customOatRow').hidden=!selectedDrink.oatEligible;
   customError.textContent='';
   loadCustomizerQuantities();
   customizer.classList.add('open');customizer.setAttribute('aria-hidden','false');
@@ -74,7 +74,7 @@ for(const [id,kind,delta] of [['customCupMinus','cup',-1],['customCupPlus','cup'
 }
 document.getElementById('customAdd').onclick=()=>{
   if(!selectedDrink)return;
-  const oatMilk=OAT_ELIGIBLE.has(selectedDrink.name)&&customOat.checked;
+  const oatMilk=selectedDrink.oatEligible&&customOat.checked;
   const otherQty=Array.from(cart.values()).filter(i=>i.name===selectedDrink.name&&i.oatMilk!==oatMilk).reduce((n,i)=>n+i.qty,0);
   if(otherQty+editingQty.cup+editingQty.bottle>MAX_QTY){
     customError.textContent=`Maximum ${MAX_QTY} per drink, including other milk options. You already have ${otherQty} in another option.`;return;
@@ -385,7 +385,7 @@ async function loadDynamicMenu() {
     return;
   }
   try {
-    const response = await fetch(`${url}/rest/v1/products?select=id,name,price,category&is_active=eq.true&order=name.asc`, {
+    const response = await fetch(`${url}/rest/v1/products?select=id,name,price,category,oat_eligible&is_active=eq.true&order=name.asc`, {
       headers: { apikey: key },
       cache: 'no-store'
     });
@@ -408,6 +408,7 @@ async function loadDynamicMenu() {
         item.dataset.name = product.name;
         item.dataset.price = String(Number(product.price));
         item.dataset.productId = product.id;
+        item.dataset.oatEligible = product.oat_eligible === true ? 'true' : 'false';
         item.dataset.drink = 'true';
         const name = document.createElement('span');
         name.textContent = product.name;
