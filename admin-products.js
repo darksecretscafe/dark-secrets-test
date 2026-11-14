@@ -52,7 +52,7 @@
 
       const { data, error } = await db
         .from('products')
-        .select('id,name,price,category,is_active')
+        .select('id,name,price,category,is_active,oat_eligible')
         .order('name');
 
       if (error) throw error;
@@ -84,6 +84,12 @@
         'ds-product-detail'
       );
 
+      const oatStatus = element(
+        'span',
+        product.oat_eligible ? 'Oat Milk Available' : 'No Oat Milk',
+        'ds-product-oat'
+      );
+
       const status = element(
         'span',
         product.is_active ? 'Active' : 'Inactive',
@@ -105,7 +111,7 @@
       toggle.onclick = () => changeAvailability(product, toggle);
 
       actions.append(edit, toggle);
-      card.append(name, detail, status, actions);
+      card.append(name, detail, oatStatus, status, actions);
       list.append(card);
     }
 
@@ -172,6 +178,12 @@
     category.value = product?.category || 'Coffee';
     categoryLabel.append(category);
 
+    const oatLabel = element('label', undefined, 'ds-product-oat-label');
+    const oatCheckbox = document.createElement('input');
+    oatCheckbox.type = 'checkbox';
+    oatCheckbox.checked = product?.oat_eligible === true;
+    oatLabel.append(oatCheckbox, document.createTextNode(' Oat Milk Eligible (+₱30)'));
+
     const actions = element('div', undefined, 'ds-product-form-actions');
 
     const save = element(
@@ -193,6 +205,7 @@
       name.label,
       price.label,
       categoryLabel,
+      oatLabel,
       actions,
       feedback
     );
@@ -243,6 +256,7 @@
           name: newName,
           price: newPrice,
           category: newCategory,
+          oat_eligible: oatCheckbox.checked,
           updated_at: new Date().toISOString()
         };
 
@@ -365,6 +379,24 @@
     .ds-product-status.inactive {
       background: #e9dbcd;
       color: #705f51;
+    }
+
+    .ds-product-oat {
+      color: #705f51;
+      font-size: 12px;
+    }
+
+    .ds-product-oat-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .ds-product-oat-label input {
+      width: 17px;
+      height: 17px;
+      accent-color: #65452c;
     }
 
     .ds-product-actions {
