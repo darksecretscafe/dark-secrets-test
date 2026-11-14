@@ -200,7 +200,13 @@
   hidden>
   <h2>Product Management</h2>
   <p>Manage your coffee shop menu.</p>
+ <button type="button" id="addProductButton">
+  + Add New Product
+</button>
+
+<div id="productFormContainer" hidden></div>
   <div id="productsList"></div>
+ 
 </section>
  
 
@@ -267,7 +273,7 @@
 <script src="admin-paid-guard.js?v=1"></script>
 <script src="admin-cancellation.js?v=4"></script>
 <script src="admin-refunds.js?v=76"></script>
-<script src="admin-products.js?v=1"></script>
+<script src="admin-products.js?v=2"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
