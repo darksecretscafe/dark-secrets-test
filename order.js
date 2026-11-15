@@ -451,5 +451,3 @@ if (DYNAMIC_MENU_PREVIEW) {
 }
 
 loadDynamicMenu();
-
-loadDynamicMenu();
