@@ -47,7 +47,7 @@ function refreshCustomizer(){
   document.getElementById('customAdd').textContent=Array.from(cart.values()).some(i=>i.name===selectedDrink.name)?'UPDATE CART':'ADD TO CART';
 }
 function openCustomizer(el){
-  selectedDrink={name:el.dataset.name,price:Number(el.dataset.price),oatEligible:el.dataset.oatEligible==='true'};
+  selectedDrink={productId:el.dataset.productId,name:el.dataset.name,price:Number(el.dataset.price),oatEligible:el.dataset.oatEligible==='true'};
   document.getElementById('customName').textContent=selectedDrink.name;
   customOat.checked=false;
   document.getElementById('customOatRow').hidden=!selectedDrink.oatEligible;
@@ -82,7 +82,7 @@ document.getElementById('customAdd').onclick=()=>{
   for(const [kind,packaging] of [['cup','Regular Cup'],['bottle','Take Away Bottle']]){
     const key=cartKey(selectedDrink.name,packaging,oatMilk), qty=editingQty[kind];
     if(qty===0)cart.delete(key);
-    else cart.set(key,{name:selectedDrink.name,price:selectedDrink.price,packaging,oatMilk,qty});
+    else cart.set(key,{productId:selectedDrink.productId,name:selectedDrink.name,price:selectedDrink.price,packaging,oatMilk,qty});
   }
   customError.textContent='';closeCustomizer();updateUI();
 };
