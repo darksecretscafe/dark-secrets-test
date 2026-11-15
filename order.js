@@ -5,7 +5,7 @@ const OAT_FEE = 30;
 // Oat milk eligibility is loaded per product from Supabase (no hardcoded drink list).
 const peso = n => `₱${n}`;
 let items = [];
-const DYNAMIC_MENU_PREVIEW = true; // TEST only: do not submit orders to the LIVE checkout.
+const DYNAMIC_MENU_PREVIEW = false; // TEST only: do not submit orders to the LIVE checkout.
 const ctaCount = document.getElementById('ctaCount');
 const ctaSummary = document.getElementById('ctaSummary');
 const modal = document.getElementById('orderModal');
