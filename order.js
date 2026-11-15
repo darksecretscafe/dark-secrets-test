@@ -285,7 +285,7 @@ document.getElementById('placeOrder').onclick=async()=>{
 submitBusy=true;btn.disabled=true;status.textContent='Submitting your order…';
  try{
   const { idempotencyKey, checkoutCredentialHash } = await getOrderAttempt(orderPayload);
-  const response=await fetch(`${window.DS_SUPABASE_URL}/functions/v1/submit-order`,{
+  const response=await fetch(`${window.DS_SUPABASE_URL}/functions/v1/submit-order-test`,{
    method:'POST',headers:{'Content-Type':'application/json'},
    body: JSON.stringify({
   ...orderPayload,
