@@ -441,10 +441,15 @@ async function loadDynamicMenu() {
   }
 }
 
-// The TEST preview supports building a cart and copying an order to Messenger,
-// but prevents server checkout until dynamic server-side validation is deployed.
-document.getElementById('placeOrder').disabled = true;
-document.getElementById('placeOrder').textContent = 'ONLINE CHECKOUT — COMING SOON';
-document.querySelector('.checkout-heading span').textContent = 'MENU PREVIEW';
-document.querySelector('.checkout-note').textContent = 'Online checkout is not enabled for the dynamic menu yet. You can copy your order and contact us through Messenger.';
+
+// TEST preview restrictions only.
+if (DYNAMIC_MENU_PREVIEW) {
+  document.getElementById('placeOrder').disabled = true;
+  document.getElementById('placeOrder').textContent = 'ONLINE CHECKOUT — COMING SOON';
+  document.querySelector('.checkout-heading span').textContent = 'MENU PREVIEW';
+  document.querySelector('.checkout-note').textContent = 'Online checkout is not enabled for the dynamic menu yet. You can copy your order and contact us through Messenger.';
+}
+
+loadDynamicMenu();
+
 loadDynamicMenu();
