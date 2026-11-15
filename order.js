@@ -240,7 +240,12 @@ function clearOrderAttempt() {
   try { localStorage.removeItem(CHECKOUT_ATTEMPT_KEY); } catch {}
 }
 function orderItemsForBackend(){
- return Array.from(cart.values()).map(i=>({name:i.name,packaging:i.packaging,quantity:i.qty,oatMilk:i.oatMilk}));
+  return Array.from(cart.values()).map(i=>({
+    product_id: i.productId,
+    packaging: i.packaging,
+    quantity: i.qty,
+    oat: i.oatMilk
+  }));
 }
 let turnstileWidgetId=null;
 function getTurnstileToken(){
